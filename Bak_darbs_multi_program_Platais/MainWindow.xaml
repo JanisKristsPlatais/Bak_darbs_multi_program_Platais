@@ -5,24 +5,32 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Bak_darbs_multi_program_Platais"
         mc:Ignorable="d"
-        Title="MainWindow" Height="850" Width="800">
+        Title="MainWindow" Height="850" Width="750">
     <Grid>
-        <!-- Profile-->
-        <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Top">
-            <Label Content="Profile:" Margin="5" VerticalAlignment="Top" HorizontalAlignment="Right" />
-            <ComboBox x:Name="ProfileCombobox" Width="200" Margin="5" SelectionChanged="ProfileCombobox_SelectionChanged"></ComboBox>
-        </StackPanel>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Profile and ComboBox row-->
+            <RowDefinition Height="*"/> <!-- WrapPanel with Program buttons-->
+            <RowDefinition Height="Auto"/> <!-- Launch All button row-->
+            <RowDefinition Height="Auto"/><!-- Hotkey settings row-->
+        </Grid.RowDefinitions>
+        
+        
 
-        <ScrollViewer Margin="10,50,10,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Margin="10,10,10,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="1">
             <WrapPanel x:Name="ProgramsWrapPanel" AllowDrop="True" Drop="ProgramsWrapPanel_Drop">
                 <!-- program tiles added here in code -->
                 <Button x:Name="AddEmptyButton" Content="+" FontSize="40" Width="150" Height="100" Margin="10" Click="AddEmptyButton_Click" />
             </WrapPanel>
         </ScrollViewer>
-        <Button x:Name="LaunchAllButton" Content="Launch All" HorizontalAlignment="Left" Margin="20,20,20,50" VerticalAlignment="Bottom" Width="200" Height="150" Click="LaunchAllButton_Click"/>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="20,0,0,15">
+        <Button x:Name="LaunchAllButton" Content="Launch All" HorizontalAlignment="Left" Margin="20,10,0,20" VerticalAlignment="Bottom" Width="180" Height="90" Click="LaunchAllButton_Click" Grid.Row="2"/>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="20,0,0,15" Grid.Row="3">
             <Button x:Name="ChangeHotkeyButton" Content="Set Hotkey" Width="90" Height="20" Click="ChangeHotkeyButton_Click"></Button>
             <Label x:Name="HotkeyLabel" AutomationProperties.Name="Current: Ctrl + Q" VerticalAlignment="Center" Margin="10,0,0,0"></Label>
+        </StackPanel>
+        <!-- Profile-->
+        <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="2">
+            <Label Content="Profile:" Margin="5" VerticalAlignment="Bottom" HorizontalAlignment="Right" />
+            <ComboBox x:Name="ProfileCombobox" Width="200" Margin="5,5,20,5" SelectionChanged="ProfileCombobox_SelectionChanged"></ComboBox>
         </StackPanel>
 
 
