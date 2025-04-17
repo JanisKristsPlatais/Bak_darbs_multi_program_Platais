@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Bak_darbs_multi_program_Platais.Database;
+using static Bak_darbs_multi_program_Platais.MainWindow;
 
 namespace Bak_darbs_multi_program_Platais
 {
@@ -20,9 +22,194 @@ namespace Bak_darbs_multi_program_Platais
     /// </summary>
     public partial class MainWindow : Window
     {
+        private List<Program> programs = new List<Program>();
         public MainWindow()
         {
             InitializeComponent();
+            CreateEmptyProgramButton();
         }
+        public class Program {
+            public string Name { get; set; }
+            public string Path { get; set; }
+        }
+
+        private Button CreateControlButton(string content, RoutedEventHandler clickHandler, Thickness margin, Program program = null) {
+            var button = new Button //default button
+            {
+                Content = content,
+                Width = 40,
+                Height = 20,
+                Margin = margin,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Tag = program
+            };
+            button.Click += clickHandler;
+            return button;
+        }
+        private Grid CreateProgramGrid(Button programButton, Program program) { //defualt grid
+            var grid = new Grid();
+            grid.Children.Add(programButton);
+
+            var closeButton = CreateControlButton("X", CloseButton_Click, new Thickness(0, 10, 10, 0));
+            grid.Children.Add(closeButton);
+
+            if (program != null) {
+                var openButton = CreateControlButton("O", OpenButton_Click, new Thickness(0, 10, 45, 0), program);
+                grid.Children.Add(openButton);
+            }
+            return grid;
+
+        }
+
+        private void CreateEmptyProgramButton() {                       //empty buttons
+            for (int i = 0; i < 12; i++) {       // how many empty buttons
+                AddEmptyProgramTile();
+            }
+
+        }
+        private void AddEmptyProgramTile(){
+            var emptyButton = new Button{
+                Content = "Click or Drag here",
+                Width = 150,
+                Height = 100,
+                Margin = new Thickness(10),
+                Tag = null
+            };
+
+            emptyButton.Click += ProgramButton_Click;
+            emptyButton.AllowDrop = true;
+            emptyButton.Drop += ProgramButton_Drop;
+
+
+            var grid = CreateProgramGrid(emptyButton, null);
+            var stackPanel = new StackPanel { Orientation = Orientation.Vertical };
+            stackPanel.Children.Add(grid);
+
+            ProgramsWrapPanel.Children.Insert(ProgramsWrapPanel.Children.Count - 1, stackPanel);
+        }
+        private void AddEmptyButton_Click(object sender, RoutedEventArgs e) { 
+            AddEmptyProgramTile();
+        }
+
+            private void CreateProgramTile(Program program) {  //tile for each program
+            var programButton = new Button { 
+                Content = program.Name, 
+                Width = 150, Height = 100, 
+                Margin = new Thickness(10), 
+                Tag = program }; //store program info in button
+            programButton.Click += ProgramButton_Click;
+            programButton.AllowDrop = true;
+            programButton.Drop += ProgramButton_Drop;
+
+            var grid = CreateProgramGrid(programButton, null);
+            var stackPanel = new StackPanel { Orientation = Orientation.Vertical };
+            stackPanel.Children.Add(grid);
+
+            ProgramsWrapPanel.Children.Add(stackPanel);
+        }
+
+
+
+        private void ProgramButton_Click(object sender, RoutedEventArgs e) { 
+            var button = sender as Button;
+            var program = button?.Tag as Program;
+            if (program == null){ //no info => enter name, path
+                var inputWindow = new ProgramInfoWindow();
+                inputWindow.OnSubmit += (name, path) =>
+                {
+                    program = new Program { Name = name, Path = path };
+                    button.Content = name;
+                    button.Tag = program;
+                    ConvertToProgramButton(button, program);
+                };
+                inputWindow.ShowDialog();
+            } else {
+                var infoWindow = new ProgramInfoWindow { 
+                    ProgramNameTextBox = { Text = program.Name}, 
+                    ProgramPathTextBox = { Text = program.Path} };
+
+                infoWindow.OnSubmit += (newName, newPath) => { 
+                    program.Name = newName;
+                    program.Path = newPath;
+                    button.Content = newName;
+                };
+                infoWindow.ShowDialog();
+            }
+        }
+        private void ProgramButton_Drop(object sender, DragEventArgs e){ //handles drag-and-drop of a program onto the button
+            var button = sender as Button;
+
+            if (e.Data.GetDataPresent(DataFormats.FileDrop)) { 
+                var filePaths = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (filePaths.Length > 0) { 
+                    string filePath = filePaths[0];
+                    var program = new Program { Name = System.IO.Path.GetFileName(filePath), Path = filePath };
+                    button.Content = program.Name;
+                    button.Tag = program;
+                    ConvertToProgramButton(button, program);
+                }
+            }
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var grid = button.Parent as Grid;
+            if (grid != null) {
+                var stackPanel = grid.Parent as StackPanel; 
+                if(stackPanel != null) ProgramsWrapPanel.Children.Remove(stackPanel);
+            }
+        }
+        private void OpenButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var program = button.Tag as Program;
+            if (program != null && !string.IsNullOrWhiteSpace(program.Path)){
+                try{
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = program.Path,
+                        UseShellExecute = true
+                    });
+                }catch (Exception ex) {
+                    MessageBox.Show($"Failed to open program: \n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }else  MessageBox.Show($"Program path not set.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            
+        }
+
+        private void ConvertToProgramButton(Button button, Program program){
+
+            var oldGrid = button.Parent as Grid;
+            if(oldGrid != null) oldGrid.Children.Remove(button);
+
+            var newGrid = CreateProgramGrid(button, program);
+            var parentStack = oldGrid?.Parent as StackPanel;
+            if (parentStack != null){
+                parentStack.Children.Clear();
+                parentStack.Children.Add(newGrid);
+                
+            }
+            button.Click -= ProgramButton_Click;
+            button.Click += ProgramButton_Click;
+        }
+
+
+
+
+
+        private void ProgramsWrapPanel_Drop(object sender, DragEventArgs e) // handle drag-and-drop event
+        {
+            var droppedProgram = e.Data.GetData(typeof(Program)) as Program;
+            if(droppedProgram != null) MessageBox.Show($"Program '{droppedProgram.Name}' added to profile.");
+        }
+        private void ProfileCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selectedProfile = ProfileCombobox.SelectedItem?.ToString();
+            MessageBox.Show($"Selected Profile: {selectedProfile}");
+        }
+
+       
     }
 }

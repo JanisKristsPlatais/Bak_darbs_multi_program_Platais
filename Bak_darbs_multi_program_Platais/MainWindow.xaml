@@ -5,8 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Bak_darbs_multi_program_Platais"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="850" Width="800">
     <Grid>
-        
+        <!-- Profile-->
+        <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Top">
+            <TextBox Text="Profile:" TextWrapping="Wrap" Margin="5" VerticalAlignment="Center" IsReadOnly="True" />
+            <ComboBox x:Name="ProfileCombobox" Width="200" Margin="5" SelectionChanged="ProfileCombobox_SelectionChanged"></ComboBox>
+        </StackPanel>
+
+        <ScrollViewer Margin="10,50,10,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <WrapPanel x:Name="ProgramsWrapPanel" AllowDrop="True" Drop="ProgramsWrapPanel_Drop">
+                <!-- program tiles added here in code -->
+                <Button x:Name="AddEmptyButton" Content="+" FontSize="40" Width="150" Height="100" Margin="10" Click="AddEmptyButton_Click" />
+            </WrapPanel>
+        </ScrollViewer>
+
     </Grid>
 </Window>
