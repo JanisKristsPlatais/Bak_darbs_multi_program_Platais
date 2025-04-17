@@ -19,6 +19,13 @@
                 <Button x:Name="AddEmptyButton" Content="+" FontSize="40" Width="150" Height="100" Margin="10" Click="AddEmptyButton_Click" />
             </WrapPanel>
         </ScrollViewer>
+        <Button x:Name="LaunchAllButton" Content="Launch All" HorizontalAlignment="Left" Margin="20,20,20,50" VerticalAlignment="Bottom" Width="200" Height="150" Click="LaunchAllButton_Click"/>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="20,0,0,15">
+            <Button x:Name="ChangeHotkeyButton" Content="Set Hotkey" Width="90" Height="20" Click="ChangeHotkeyButton_Click"></Button>
+            <Label x:Name="HotkeyLabel" AutomationProperties.Name="Current: Ctrl + Q" VerticalAlignment="Center" Margin="10,0,0,0"></Label>
+        </StackPanel>
+
+
 
     </Grid>
 </Window>

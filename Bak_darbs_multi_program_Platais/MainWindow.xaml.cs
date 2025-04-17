@@ -23,15 +23,91 @@ namespace Bak_darbs_multi_program_Platais
     public partial class MainWindow : Window
     {
         private List<Program> programs = new List<Program>();
+        private CustomHotkey launchHotkey = new CustomHotkey { Ctrl = true, MainKey = Key.Q }; //default is Ctrl+Q
+        private bool isCapturingHotkey = false;
         public MainWindow()
         {
             InitializeComponent();
+            this.PreviewKeyDown += MainWindow_PreviewKeyDown;
+            UpdateHotkeyLabel();
             CreateEmptyProgramButton();
         }
         public class Program {
             public string Name { get; set; }
             public string Path { get; set; }
         }
+
+        public class CustomHotkey { 
+            public Key MainKey { get; set; }
+            public bool Ctrl {  get; set; }
+            public bool Shift { get; set; }
+            public bool Alt { get; set; }
+
+            public override string ToString()
+            {
+                List<string> parts = new List<string>();
+                if (Ctrl) parts.Add("Ctrl");
+                if (Shift) parts.Add("Shift");
+                if (Alt) parts.Add("Alt");
+                parts.Add(MainKey.ToString());
+                return string.Join(" + ", parts);
+            }
+            public bool isMatch(KeyEventArgs e) {
+                bool ctrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+                bool shiftPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+                bool altPressed = Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
+                Key keyPressed = e.Key == Key.System ? e.SystemKey : e.Key;
+                return keyPressed == MainKey && ctrlPressed == Ctrl && shiftPressed == Shift && altPressed == Alt;
+            }
+        }
+        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e) {
+            if (launchHotkey != null && launchHotkey.isMatch(e)) { 
+                LaunchAllButton_Click(null, null);
+                e.Handled = true;
+            }
+        }
+        private void UpdateHotkeyLabel() { HotkeyLabel.Content = $"Current: {launchHotkey}"; }
+        private void ChangeHotkeyButton_Click(object sender, RoutedEventArgs e) {
+            if (!isCapturingHotkey) { 
+                isCapturingHotkey = true;
+                HotkeyLabel.Content = ("Press your hotkey combination. (ESC to cancel)");
+                this.PreviewKeyDown -= CaptureHotkey;
+                this.PreviewKeyDown += CaptureHotkey;
+            }
+        }
+        private void CaptureHotkey(object sender, KeyEventArgs e) {
+            e.Handled = true;
+            if (e.Key == Key.Escape) {
+                EndHotkeyCapture();
+                return;
+            }
+            Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+            if (key == Key.LeftCtrl || key == Key.RightCtrl ||
+                key == Key.LeftShift || key == Key.RightShift ||
+                key == Key.LeftAlt || key == Key.RightAlt ||
+                key == Key.LWin || key == Key.RWin) { return; }
+            launchHotkey = new CustomHotkey
+            {
+                Ctrl = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl),
+                Shift = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift),
+                Alt = Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt),
+                MainKey = key
+            };
+
+            UpdateHotkeyLabel();
+            MessageBox.Show($"New hotkey set: {launchHotkey}");
+
+            EndHotkeyCapture();
+        }
+        private void EndHotkeyCapture() { 
+            this.PreviewKeyDown -= CaptureHotkey;
+            isCapturingHotkey = false;
+            HotkeyLabel.Content = $"Current: {launchHotkey}";
+        }
+
+
+
+
 
         private Button CreateControlButton(string content, RoutedEventHandler clickHandler, Thickness margin, Program program = null) {
             var button = new Button //default button
@@ -210,6 +286,37 @@ namespace Bak_darbs_multi_program_Platais
             MessageBox.Show($"Selected Profile: {selectedProfile}");
         }
 
-       
+
+
+
+        private void LaunchAllButton_Click(object sender, RoutedEventArgs e)
+        {
+            var launchedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var stackPanel in ProgramsWrapPanel.Children.OfType<StackPanel>())
+            {
+                if (stackPanel.Children[0] is Grid grid)
+                {
+                    foreach (var child in grid.Children.OfType<Button>())
+                    {
+                        if (child.Tag is Program program && !string.IsNullOrWhiteSpace(program.Path) && launchedPaths.Add(program.Path))
+                        {
+                            try
+                            {
+                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                {
+                                    FileName = program.Path,
+                                    UseShellExecute = true
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show($"Failed to launch {program.Name}:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
+                            
+                        }
+                    }
+                }
+            }
+        }
     }
 }
