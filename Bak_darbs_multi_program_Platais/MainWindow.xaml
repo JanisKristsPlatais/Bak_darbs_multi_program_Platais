@@ -9,7 +9,7 @@
     <Grid>
         <!-- Profile-->
         <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Top">
-            <TextBox Text="Profile:" TextWrapping="Wrap" Margin="5" VerticalAlignment="Center" IsReadOnly="True" />
+            <Label Content="Profile:" Margin="5" VerticalAlignment="Top" HorizontalAlignment="Right" />
             <ComboBox x:Name="ProfileCombobox" Width="200" Margin="5" SelectionChanged="ProfileCombobox_SelectionChanged"></ComboBox>
         </StackPanel>
 
