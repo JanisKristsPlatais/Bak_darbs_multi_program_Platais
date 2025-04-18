@@ -17,7 +17,7 @@
         
 
         <ScrollViewer Margin="10,10,10,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="1">
-            <WrapPanel x:Name="ProgramsWrapPanel" AllowDrop="True" Drop="ProgramsWrapPanel_Drop">
+            <WrapPanel x:Name="ProgramsWrapPanel" AllowDrop="True">
                 <!-- program tiles added here in code -->
                 <Button x:Name="AddEmptyButton" Content="+" FontSize="40" Width="150" Height="100" Margin="10" Click="AddEmptyButton_Click" />
             </WrapPanel>
