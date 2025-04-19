@@ -13,7 +13,7 @@
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         MouseMove="Window_MouseMove">
     <Canvas>
-        <TextBlock x:Name="CoordText" Background="White" Foreground="Black" FontSize="14" Padding="5" Visibility="Collapsed" />
+        <TextBlock x:Name="CoordText" Background="White" FontSize="14" Padding="5" Visibility="Collapsed" />
     </Canvas>
         
     

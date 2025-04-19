@@ -82,7 +82,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="CoordCaptureWindow.xaml">
+    <Compile Include="Services\WindowManager.cs" />
+    <Page Include="Windows\CoordCaptureWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -94,7 +95,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="CoordCaptureWindow.xaml.cs">
+    <Compile Include="Windows\CoordCaptureWindow.xaml.cs">
       <DependentUpon>CoordCaptureWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Database\DatabaseManager.cs" />
@@ -102,14 +103,15 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="ProgramInfoWindow.xaml">
+    <Page Include="Windows\ProgramInfoWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\CustomHotkey.cs" />
     <Compile Include="Models\ProgramModel.cs" />
-    <Compile Include="ProgramInfoWindow.xaml.cs">
+    <Compile Include="Windows\ProgramInfoWindow.xaml.cs">
       <DependentUpon>ProgramInfoWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">

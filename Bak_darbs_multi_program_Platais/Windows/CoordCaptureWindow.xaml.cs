@@ -17,27 +17,26 @@ using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 
 namespace Bak_darbs_multi_program_Platais
 {
-    /// <summary>
-    /// Interaction logic for CoordCaptureWindow.xaml
-    /// </summary>
     public partial class CoordCaptureWindow : Window
     {
         public Action<Point> OnPointSelected;
         public CoordCaptureWindow()
         {
             InitializeComponent();
+
             WindowMaxSize();
             this.Background = new SolidColorBrush(Color.FromArgb(50,0,0,0));
             Cursor = Cursors.Cross;
         }
-        private void WindowMaxSize() {
-            var allScreens = System.Windows.Forms.Screen.AllScreens;
+        private void WindowMaxSize() { //makes sure window covers all available screen space
+            var allScreens = System.Windows.Forms.Screen.AllScreens; //get all screens
+            //get screen edges
             int maxRight = int.MinValue;
             int maxBottom = int.MinValue;
             int minLeft = int.MaxValue;
             int minTop = int.MaxValue;
 
-            foreach (var screen in allScreens)
+            foreach (var screen in allScreens) //makes sure all screen bounds are encompassed
             {
                 minLeft = Math.Min(minLeft, screen.Bounds.Left);
                 minTop = Math.Min(minTop, screen.Bounds.Top);
@@ -50,18 +49,18 @@ namespace Bak_darbs_multi_program_Platais
             this.Top = minTop;
         }
 
+        private void Window_MouseMove(object sender, MouseEventArgs e){ //gets coords from mouse location
 
-        private void Window_MouseMove(object sender, MouseEventArgs e){
-
-            var screenPos = PointToScreen(e.GetPosition(this));
+            var screenPos = PointToScreen(e.GetPosition(this)); //mouse position on screen
             CoordText.Text = $"X: {(int)screenPos.X}, Y: {(int)screenPos.Y}";
             CoordText.Visibility = Visibility.Visible;
 
-            var pos = e.GetPosition(this); //update position of coord text
+            //update position of coord text, +15 to offset text 
+            var pos = e.GetPosition(this); // mouse position relative to the window
             Canvas.SetLeft(CoordText, pos.X + 15);
             Canvas.SetTop(CoordText, pos.Y + 15);
         }
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) //use selected coords
         {
             var pos = PointToScreen(e.GetPosition(this));
             OnPointSelected?.Invoke(pos);

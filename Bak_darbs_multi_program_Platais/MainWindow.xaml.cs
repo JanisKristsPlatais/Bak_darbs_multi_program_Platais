@@ -15,31 +15,17 @@ using System.Windows.Shapes;
 using Bak_darbs_multi_program_Platais.Database;
 using static Bak_darbs_multi_program_Platais.MainWindow;
 using Bak_darbs_multi_program_Platais.Models;
+using Bak_darbs_multi_program_Platais.Services;
 using System.Runtime.InteropServices;
 
 namespace Bak_darbs_multi_program_Platais
 {
     public partial class MainWindow : Window
     {
-        [DllImport("user32.dll",SetLastError =true)] //provides basic window management functionality
-        public static extern IntPtr FindWindow(string  classOfWindow, string titleOfWindow);
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern bool SetWindowPos(IntPtr windowHandle, IntPtr windowZOrder, int newX, int newY, int width, int height, uint Flags);
-        [DllImport("user32.dll")]
-        public static extern bool ShowWindow(IntPtr windowHandle, int nCmdShow);
-        private const uint SWP_NOZORDER = 0x0004; //dont change window z-order
-        public static void MoveWindow(string windowTitle, int x, int y) { 
-            IntPtr windowHandle = FindWindow(null, windowTitle);
-            if (windowHandle != IntPtr.Zero) 
-                SetWindowPos(windowHandle, IntPtr.Zero, x, y, 0,0,SWP_NOZORDER); //move window to coords
-            }
-
-
-
-
         private List<ProgramModel> programs = new List<ProgramModel>();
         private CustomHotkey launchHotkey = new CustomHotkey { Ctrl = true, MainKey = Key.Q }; //default is Ctrl+Q
         private bool isCapturingHotkey = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -49,37 +35,16 @@ namespace Bak_darbs_multi_program_Platais
         }
 
 
-        public class CustomHotkey { 
-            public Key MainKey { get; set; }
-            public bool Ctrl {  get; set; }
-            public bool Shift { get; set; }
-            public bool Alt { get; set; }
+        //Hotkey management-----------------
 
-            public override string ToString()
-            {
-                List<string> parts = new List<string>();
-                if (Ctrl) parts.Add("Ctrl");
-                if (Shift) parts.Add("Shift");
-                if (Alt) parts.Add("Alt");
-                parts.Add(MainKey.ToString());
-                return string.Join(" + ", parts);
-            }
-            public bool isMatch(KeyEventArgs e) {
-                bool ctrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
-                bool shiftPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
-                bool altPressed = Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
-                Key keyPressed = e.Key == Key.System ? e.SystemKey : e.Key;
-                return keyPressed == MainKey && ctrlPressed == Ctrl && shiftPressed == Shift && altPressed == Alt;
-            }
-        }
-        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e) {
+
+        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e) { //if hotkey is pressed, launches all programs
             if (launchHotkey != null && launchHotkey.isMatch(e)) { 
                 LaunchAllButton_Click(null, null);
                 e.Handled = true;
             }
         }
-        private void UpdateHotkeyLabel() { HotkeyLabel.Content = $"Current: {launchHotkey}"; }
-        private void ChangeHotkeyButton_Click(object sender, RoutedEventArgs e) {
+        private void ChangeHotkeyButton_Click(object sender, RoutedEventArgs e) { //lets user change hotkey
             if (!isCapturingHotkey) { 
                 isCapturingHotkey = true;
                 HotkeyLabel.Content = ("Press your hotkey combination. (ESC to cancel)");
@@ -89,7 +54,7 @@ namespace Bak_darbs_multi_program_Platais
         }
         private void CaptureHotkey(object sender, KeyEventArgs e) {
             e.Handled = true;
-            if (e.Key == Key.Escape) {
+            if (e.Key == Key.Escape) { //if user presses ESC, end hotkey capture
                 EndHotkeyCapture();
                 return;
             }
@@ -97,7 +62,7 @@ namespace Bak_darbs_multi_program_Platais
             if (key == Key.LeftCtrl || key == Key.RightCtrl ||
                 key == Key.LeftShift || key == Key.RightShift ||
                 key == Key.LeftAlt || key == Key.RightAlt ||
-                key == Key.LWin || key == Key.RWin) { return; }
+                key == Key.LWin || key == Key.RWin) { return; } //skip modifier keys
             launchHotkey = new CustomHotkey
             {
                 Ctrl = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl),
@@ -108,7 +73,6 @@ namespace Bak_darbs_multi_program_Platais
 
             UpdateHotkeyLabel();
             MessageBox.Show($"New hotkey set: {launchHotkey}");
-
             EndHotkeyCapture();
         }
         private void EndHotkeyCapture() { 
@@ -116,13 +80,14 @@ namespace Bak_darbs_multi_program_Platais
             isCapturingHotkey = false;
             HotkeyLabel.Content = $"Current: {launchHotkey}";
         }
+        private void UpdateHotkeyLabel() { HotkeyLabel.Content = $"Current: {launchHotkey}"; } //updates hotkey label
 
 
 
 
-
+        // Program tiles-buttons
         private Button CreateControlButton(string content, RoutedEventHandler clickHandler, Thickness margin, ProgramModel program = null) {
-            var button = new Button //default button
+            var button = new Button //make default button
             {
                 Content = content,
                 Width = 40,
@@ -135,30 +100,26 @@ namespace Bak_darbs_multi_program_Platais
             button.Click += clickHandler;
             return button;
         }
-        private Grid CreateProgramGrid(Button programButton, ProgramModel program) { //defualt grid
+        private Grid CreateProgramGrid(Button programButton, ProgramModel program) { //defualt program grid with empty buttons
             var grid = new Grid();
             grid.Children.Add(programButton);
 
             var closeButton = CreateControlButton("X", CloseButton_Click, new Thickness(0, 10, 10, 0));
             grid.Children.Add(closeButton);
 
-            if (program != null) {
+            if (program != null) { //if its a program button (has path), also add open button to it
                 var openButton = CreateControlButton("O", OpenButton_Click, new Thickness(0, 10, 45, 0), program);
                 grid.Children.Add(openButton);
             }
             return grid;
 
         }
-
-        private void CreateEmptyProgramButton() {                       //empty buttons
+        //empty and add button------------
+        private void AddEmptyButton_Click(object sender, RoutedEventArgs e){ AddEmptyProgramTile(); }
+        private void CreateEmptyProgramButton() {
             for (int i = 0; i < 12; i++) {       // how many empty buttons
-                AddEmptyProgramTile();
-            }
-
-        }
-        private void AddEmptyProgramTile(){
-
-
+                AddEmptyProgramTile();}}
+        private void AddEmptyProgramTile(){ //make and add empty button to tile layout
             var emptyButton = new Button{
                 Content = "Click or Drag here",
                 Width = 150,
@@ -166,11 +127,9 @@ namespace Bak_darbs_multi_program_Platais
                 Margin = new Thickness(10),
                 Tag = null
             };
-
             emptyButton.Click += ProgramButton_Click;
             emptyButton.AllowDrop = true;
             emptyButton.Drop += ProgramButton_Drop;
-
 
             var grid = CreateProgramGrid(emptyButton, null);
             var stackPanel = new StackPanel { Orientation = Orientation.Vertical };
@@ -179,16 +138,17 @@ namespace Bak_darbs_multi_program_Platais
             ProgramsWrapPanel.Children.Insert(ProgramsWrapPanel.Children.Count - 1, stackPanel);
             UpdateAddButtonVisibility();
         }
-        private void AddEmptyButton_Click(object sender, RoutedEventArgs e) { 
-            AddEmptyProgramTile();
-        }
+       
+
         private void UpdateAddButtonVisibility() { 
             int programTileCount = ProgramsWrapPanel.Children
                 .OfType<StackPanel>().
-                Count(sp=>sp.Children.OfType<Grid>().Any());        //how many tiles == how many program buttons
-            if(programTileCount >= 50) AddEmptyButton.Visibility = Visibility.Collapsed;
+                Count(sp=>sp.Children.OfType<Grid>().Any());        //count program buttons
+
+            if(programTileCount >= 50) AddEmptyButton.Visibility = Visibility.Collapsed; //max 50 empty/program buttons
             else AddEmptyButton.Visibility = Visibility.Visible;
         }
+
 
         private void CreateProgramTile(ProgramModel program) {  //tile for each program
         var programButton = new Button { 
@@ -208,21 +168,21 @@ namespace Bak_darbs_multi_program_Platais
         }
 
 
-
-        private void ProgramButton_Click(object sender, RoutedEventArgs e) { 
+        //program button------------
+        private void ProgramButton_Click(object sender, RoutedEventArgs e) { //when clicking on program button, open Info Window
             var button = sender as Button;
             var program = button?.Tag as ProgramModel;
             if (program == null){ //no info => enter name, path
                 var inputWindow = new ProgramInfoWindow(program);
-                inputWindow.OnSubmit += (name, path, newX, newY) =>
+                inputWindow.OnSubmit += (name, path, x, y) =>
                 {
-                    program = new ProgramModel { Name = name, ProgramName = System.IO.Path.GetFileName(path), Path = path , X = newX, Y = newY};
+                    program = new ProgramModel { Name = name, ProgramName = System.IO.Path.GetFileName(path), Path = path , X = x, Y = y};
                     button.Content = name;
                     button.Tag = program;
                     ConvertToProgramButton(button, program);
                 };
                 inputWindow.Show();
-            } else {
+            } else {    //has info => update info
                 var infoWindow = new ProgramInfoWindow(program);
 
                 infoWindow.OnSubmit += (newName, newPath, newX, newY) => { 
@@ -240,9 +200,9 @@ namespace Bak_darbs_multi_program_Platais
             var button = sender as Button;
 
             if (e.Data.GetDataPresent(DataFormats.FileDrop)) { 
-                var filePaths = (string[])e.Data.GetData(DataFormats.FileDrop);
+                var filePaths = (string[])e.Data.GetData(DataFormats.FileDrop); //dropped might be multiple files
                 if (filePaths.Length > 0) { 
-                    string filePath = filePaths[0];
+                    string filePath = filePaths[0]; //only use first file from dropped ones
                     var program = new ProgramModel { Name = System.IO.Path.GetFileName(filePath), Path = filePath };
                     button.Content = program.Name;
                     button.Tag = program;
@@ -250,8 +210,25 @@ namespace Bak_darbs_multi_program_Platais
                 }
             }
         }
+        private void ConvertToProgramButton(Button button, ProgramModel program){ //make empty button into program button
+            var oldGrid = button.Parent as Grid;
+            oldGrid?.Children.Remove(button);
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+            var newGrid = CreateProgramGrid(button, program);
+            var parentStack = oldGrid?.Parent as StackPanel;
+            if (parentStack != null)
+            {
+                parentStack.Children.Clear();
+                parentStack.Children.Add(newGrid);
+
+            }
+            button.Click -= ProgramButton_Click; //clear old
+            button.Click += ProgramButton_Click; //add new
+        }
+
+
+        //Other buttons------------
+        private void CloseButton_Click(object sender, RoutedEventArgs e) //close selected empty/program button
         {
             var button = sender as Button;
             var grid = button.Parent as Grid;
@@ -263,7 +240,7 @@ namespace Bak_darbs_multi_program_Platais
                 }
             }
         }
-        private async void OpenButton_Click(object sender, RoutedEventArgs e)
+        private async void OpenButton_Click(object sender, RoutedEventArgs e) //open program and move it to coords | open website in new tab
         {
             int findTimeout = 6000; //in miliseconds
             var button = sender as Button;
@@ -273,16 +250,16 @@ namespace Bak_darbs_multi_program_Platais
                     var process = System.Diagnostics.Process.Start(program.Path);
                     if (process != null){
                         await Task.Delay(500);
-                        IntPtr windowHandle = IntPtr.Zero;
+                        IntPtr windowHandle = IntPtr.Zero; //IntrPtr.Zero is like null
                         DateTime startTime = DateTime.Now;
-                        while (windowHandle == IntPtr.Zero && (DateTime.Now - startTime).TotalMilliseconds < findTimeout){
-                            windowHandle = FindWindow(null, program.ProgramName);
-                            await Task.Delay(250);}
-                        if (windowHandle != IntPtr.Zero)
+                        while (windowHandle == IntPtr.Zero && (DateTime.Now - startTime).TotalMilliseconds < findTimeout){ //find window handle during time
+                            windowHandle = WindowManager.FindWindow(null, program.ProgramName);
+                            await Task.Delay(250);} //gives a bit of time for program to open
+                        if (windowHandle != IntPtr.Zero) //if program window handle found
                         {
                             await Task.Delay(500);
-                            ShowWindow(windowHandle, 9); //window in restored state
-                            MoveWindow(program.ProgramName, program.X, program.Y);
+                            WindowManager.ShowWindow(windowHandle, 9); //window in restored state to move easier
+                            WindowManager.MoveWindow(program.ProgramName, program.X, program.Y);
                         }
                     }
                 }
@@ -293,23 +270,6 @@ namespace Bak_darbs_multi_program_Platais
             }
             else MessageBox.Show($"Program path not set.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
 
-        }
-
-
-        private void ConvertToProgramButton(Button button, ProgramModel program){
-
-            var oldGrid = button.Parent as Grid;
-            if(oldGrid != null) oldGrid.Children.Remove(button);
-
-            var newGrid = CreateProgramGrid(button, program);
-            var parentStack = oldGrid?.Parent as StackPanel;
-            if (parentStack != null){
-                parentStack.Children.Clear();
-                parentStack.Children.Add(newGrid);
-                
-            }
-            button.Click -= ProgramButton_Click;
-            button.Click += ProgramButton_Click;
         }
 
         private void LaunchAllButton_Click(object sender, RoutedEventArgs e) //launch all programs = press all open buttons
@@ -333,7 +293,7 @@ namespace Bak_darbs_multi_program_Platais
 
 
 
-
+        //Profile------------
         private void ProfileCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var selectedProfile = ProfileCombobox.SelectedItem?.ToString();
