@@ -36,7 +36,7 @@ namespace Bak_darbs_multi_program_Platais
             CoordsDisplayTextBox.Text = $"Coords: X = {program.X}, Y = {program.Y}";
         }
         private void SubmitButton_Click(object sender, RoutedEventArgs e){
-            OnSubmit?.Invoke(ProgramNameTextBox.Text, ProgramPathTextBox.Text, program.X, program.Y);
+            OnSubmit?.Invoke(ProgramNameTextBox.Text, ProgramPathTextBox.Text.Trim('"'), program.X, program.Y);
             UpdateCoordButtonState();
             this.Close();  
         }
