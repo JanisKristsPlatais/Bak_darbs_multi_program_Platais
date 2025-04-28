@@ -26,6 +26,8 @@ namespace Bak_darbs_multi_program_Platais
         private CustomHotkey launchHotkey = new CustomHotkey { Ctrl = true, MainKey = Key.Q }; //default is Ctrl+Q
         private bool isCapturingHotkey = false;
 
+        private string currentProfileName = "Profile";
+
         public MainWindow()
         {
             InitializeComponent();
