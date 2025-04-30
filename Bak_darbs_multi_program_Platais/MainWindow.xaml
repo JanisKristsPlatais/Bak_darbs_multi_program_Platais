@@ -33,10 +33,22 @@
         <!-- Profile-->
         <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="2">
             <Label Content="Profile:" Margin="5" VerticalAlignment="Bottom" HorizontalAlignment="Right" />
-            <ComboBox x:Name="ProfileCombobox" Width="200" Margin="5,5,20,5" SelectionChanged="ProfileCombobox_SelectionChanged"></ComboBox>
+            <ComboBox x:Name="ProfileCombobox" Width="200" Margin="5,5,20,5" SelectionChanged="ProfileCombobox_SelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Profile Name Display -->
+                            <TextBox x:Name="ProfileNameTextBox" Text="{Binding Name}" VerticalAlignment="Center" Width="100" IsReadOnly="True" Margin="5" GotFocus="ProfileNameTextBox_GotFocus" LostFocus="ProfileNameTextBox_LostFocus" Tag="{}{Binding Name}"/>
+                            <Button Content="❌" Margin="5" Tag="{Binding Name}" Click="DeleteProfile_Click"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Content="➕" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="50" Height="30" Click="CreateProfile_Click"/>
         </StackPanel>
 
 
 
     </Grid>
+    
 </Window>

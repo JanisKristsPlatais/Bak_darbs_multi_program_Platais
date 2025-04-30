@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Bak_darbs_multi_program_Platais.Models;
-using Microsoft.Data.Sqlite;
+using System.Data.SQLite;
+using SQLitePCL;
 
 namespace Bak_darbs_multi_program_Platais.Database
 {
@@ -15,7 +12,7 @@ namespace Bak_darbs_multi_program_Platais.Database
 
         public static void InitializeDatabase()
         { //makes table if it doesn't exist
-            using (var connection = new SqliteConnection($"Data Source={dbFile}"))
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
             {
                 connection.Open();
 
@@ -24,7 +21,7 @@ namespace Bak_darbs_multi_program_Platais.Database
                     command.CommandText = @"
                         CREATE TABLE IF NOT EXISTS Profiles(
                             Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            Name TEXT NOT NUL UNIQUE
+                            Name TEXT NOT NULL UNIQUE
                             );";
                     command.ExecuteNonQuery();
                 }
@@ -35,11 +32,11 @@ namespace Bak_darbs_multi_program_Platais.Database
                         CREATE TABLE IF NOT EXISTS Programs(
                             Id INTEGER PRIMARY KEY AUTOINCREMENT,
                             ProgramName TEXT NOT NULL,
-                            ProgramPath TEXT NOT NULL
-                            ProfileId INTEGER NOT NULL
-                            X INTEGER DEFAULT 0
-                            Y INTEGER DEFAULT 0
-                            FOREIGN KEY(ProfileId) REFERENCES Profiles(Id) ON DELETE CASCADE;";
+                            ProgramPath TEXT NOT NULL,
+                            ProfileId INTEGER NOT NULL,
+                            X INTEGER DEFAULT 0,
+                            Y INTEGER DEFAULT 0,
+                            FOREIGN KEY(ProfileId) REFERENCES Profiles(Id) ON DELETE CASCADE);";
                     command.ExecuteNonQuery();
                 }
             }
@@ -48,7 +45,7 @@ namespace Bak_darbs_multi_program_Platais.Database
         //profiles----------------------
 
         public static void AddProfile(string profileName) {
-            using (var connection = new SqliteConnection($"Data Source={dbFile}")) { 
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}")) { 
                 connection.Open();
 
                 using (var command = connection.CreateCommand()) {
@@ -62,7 +59,7 @@ namespace Bak_darbs_multi_program_Platais.Database
         }
         public static List<string> GetProfiles() { 
             var profiles = new List<string>();
-            using (var connection = new SqliteConnection($"Data Source={dbFile}"))
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
             {
                 connection.Open();
 
@@ -77,7 +74,7 @@ namespace Bak_darbs_multi_program_Platais.Database
             return profiles;
         }
         public static int GetProfileId(string profileName) {
-            using (var connection = new SqliteConnection($"Data Source={dbFile}"))
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
             {
                 connection.Open();
 
@@ -92,6 +89,20 @@ namespace Bak_darbs_multi_program_Platais.Database
             }
         }
 
+        public static void UpdateProfileName(string oldName, string newName) {
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}")) {
+                connection.Open();
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"UPDATE Profiles SET Name = $newName WHERE Name = $oldName";
+                    command.Parameters.AddWithValue("$oldName", oldName);
+                    command.Parameters.AddWithValue("$newName", newName);
+                    command.ExecuteNonQuery();
+                }
+                }
+        }
+
         //programs--------------
         public static void SaveProgram(string programName, string programPath, string profileName, int x, int y)
         {
@@ -102,7 +113,7 @@ namespace Bak_darbs_multi_program_Platais.Database
                 profileId = GetProfileId(profileName);
             }
 
-            using (var connection = new SqliteConnection($"Data Source={dbFile}"))
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
             {
                 connection.Open();
 
@@ -110,10 +121,10 @@ namespace Bak_darbs_multi_program_Platais.Database
                 {
                     command.CommandText = @"
                         INSERT INTO Programs (ProgramName, ProgramPath, ProfileId, X, Y)
-                        VALUES($programName, $programPath, profileId, $x, $y)";
+                        VALUES($programName, $programPath, $profileId, $x, $y)";
                     command.Parameters.AddWithValue("$programName", programName);
                     command.Parameters.AddWithValue("$programPath", programPath);
-                    command.Parameters.AddWithValue("profileId", profileId);
+                    command.Parameters.AddWithValue("$profileId", profileId);
                     command.Parameters.AddWithValue("$x", x);
                     command.Parameters.AddWithValue("$y", y);
                     command.ExecuteNonQuery();
@@ -125,13 +136,13 @@ namespace Bak_darbs_multi_program_Platais.Database
             int profileId = GetProfileId(profileName);
             if(profileId == -1) return programs;
 
-            using (var connection = new SqliteConnection($"Data Source={dbFile}")) { 
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}")) { 
                 connection.Open();
 
                 using (var command = connection.CreateCommand()){
                     command.CommandText = @"
                         SELECT ProgramName, ProgramPath, X, Y FROM Programs WHERE ProfileId = $profileId";
-                    command.Parameters.AddWithValue("profileId", profileId);
+                    command.Parameters.AddWithValue("$profileId", profileId);
                     using (var reader = command.ExecuteReader()) {
                         while (reader.Read()) {
                             var program = new ProgramModel {
@@ -153,7 +164,7 @@ namespace Bak_darbs_multi_program_Platais.Database
             int profileId = GetProfileId(profileName);
             if (profileId == -1) return;
 
-            using (var connection = new SqliteConnection($"Data Source={dbFile}"))
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -161,7 +172,7 @@ namespace Bak_darbs_multi_program_Platais.Database
                     command.CommandText = @"
                         DELETE FROM Programs WHERE ProgramName = $programName AND ProfileId = $profileId;";
                     command.Parameters.AddWithValue("$programName", programName);
-                    command.Parameters.AddWithValue("profileId", profileId);
+                    command.Parameters.AddWithValue("$profileId", profileId);
                     command.ExecuteNonQuery();
                 }
             }

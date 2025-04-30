@@ -1,22 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Bak_darbs_multi_program_Platais.Database;
-using static Bak_darbs_multi_program_Platais.MainWindow;
 using Bak_darbs_multi_program_Platais.Models;
 using Bak_darbs_multi_program_Platais.Services;
-using System.Runtime.InteropServices;
+using System.Collections.ObjectModel;
+using Bak_darbs_multi_program_Platais.Database;
 
 namespace Bak_darbs_multi_program_Platais
 {
@@ -26,14 +18,24 @@ namespace Bak_darbs_multi_program_Platais
         private CustomHotkey launchHotkey = new CustomHotkey { Ctrl = true, MainKey = Key.Q }; //default is Ctrl+Q
         private bool isCapturingHotkey = false;
 
-        private string currentProfileName = "Profile";
+        public ObservableCollection<ProfileModel> profiles = new ObservableCollection<ProfileModel>();
 
         public MainWindow()
         {
+
             InitializeComponent();
+
+            DatabaseManager.InitializeDatabase();
+            LoadProfiles();
+
             this.PreviewKeyDown += MainWindow_PreviewKeyDown;
+
+            profiles.Add(new ProfileModel { Name = "Profile 1" });
+            ProfileCombobox.ItemsSource = profiles;
+
             UpdateHotkeyLabel();
             CreateEmptyProgramButton();
+            
         }
 
 
@@ -167,6 +169,7 @@ namespace Bak_darbs_multi_program_Platais
             stackPanel.Children.Add(grid);
 
             ProgramsWrapPanel.Children.Add(stackPanel);
+            DatabaseManager.SaveProgram(program.Name, program.Path, ProfileCombobox.SelectedItem.ToString(), program.X, program.Y);
         }
 
 
@@ -296,10 +299,112 @@ namespace Bak_darbs_multi_program_Platais
 
 
         //Profile------------
+        public void LoadProfiles()
+        {
+            var profiles = DatabaseManager.GetProfiles();
+            ProfileCombobox.ItemsSource = profiles;
+            if(profiles.Count>0) ProfileCombobox.SelectedIndex = 0;
+        }
+
         private void ProfileCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedProfile = ProfileCombobox.SelectedItem?.ToString();
-            MessageBox.Show($"Selected Profile: {selectedProfile}");
+            ProgramsWrapPanel.Children.Clear();
+            var selectedProfileName = ProfileCombobox.SelectedItem as string;
+            var loadedPrograms = DatabaseManager.GetProgramsByProfile(selectedProfileName);
+            if (loadedPrograms.Any()) { 
+                foreach(var program in loadedPrograms) CreateProgramTile(program);
+            }
+            ProgramsWrapPanel.Children.Add(AddEmptyButton);
+            if (!loadedPrograms.Any()) {
+                CreateEmptyProgramButton();
+            }
+            UpdateAddButtonVisibility();
+
+            
+            //DisplayPrograms(programs);
+
         }
+        //public void DisplayPrograms(List<ProgramModel> programs) { 
+        //    ProgramsWrapPanel.Children.Clear();
+        //    foreach (var program in programs) {
+                
+        //    }
+        //}
+
+        private void RenameProfile_Click(object sender, RoutedEventArgs e)
+        {
+            Button button = sender as Button;
+            string profileName = button.Tag.ToString();
+
+            var selectedItem = ProfileCombobox.ItemContainerGenerator.ContainerFromItem(button.DataContext) as FrameworkElement;
+            var textBlock = selectedItem?.FindName("ProfileNameTextBlock") as TextBlock;
+            var textBox = selectedItem?.FindName("ProfileNameTextBox") as TextBox;
+
+            if (textBlock != null && textBox != null) { 
+                textBlock.Visibility = Visibility.Collapsed;
+                textBox.Visibility = Visibility.Visible;
+                textBox.Focus();
+            }
+            textBox.KeyDown += (s, keyEventArgs) =>
+            {
+                if (keyEventArgs.Key == Key.Enter) { 
+                    textBlock.Text = textBox.Text;
+                    textBlock.Visibility = Visibility.Visible;
+                    textBox.Visibility = Visibility.Collapsed;
+
+                    ProfileModel profile = profiles.FirstOrDefault(p => p.Name == profileName);
+                    if (profile != null) { 
+                        profile.Name = textBox.Text;
+                        DatabaseManager.UpdateProfileName(profileName, textBox.Text);
+                    }
+                }
+            };
+
+        }
+
+        private void ProfileNameTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox != null) textBox.IsReadOnly = false;
+        }
+
+        private void ProfileNameTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            TextBox textbox = sender as TextBox;
+            if (textbox != null) { 
+                textbox.IsReadOnly = true;
+
+                string oldName = textbox.Tag.ToString();
+                string newName = textbox.Text;
+
+                if (oldName != newName) { 
+                    ProfileModel profile = profiles.FirstOrDefault(p => p.Name == oldName);
+                    if (profile != null) {
+                        profile.Name = newName;
+                        DatabaseManager.UpdateProfileName(oldName, newName);
+                    }
+                }
+            }
+
+        }
+        private void DeleteProfile_Click(object sender, RoutedEventArgs e)
+        {
+            Button button = sender as Button;
+            string profileName = button.Tag.ToString();
+
+            ProfileModel profile = profiles.FirstOrDefault(p => p.Name == profileName);
+            if (profile != null) { 
+                profiles.Remove(profile);
+                ProfileCombobox.ItemsSource = profiles;
+            }
+        }
+
+        private void CreateProfile_Click(object sender, RoutedEventArgs e)
+        {
+            string newProfileName = "Profile " + (profiles.Count + 1);
+            profiles.Add(new ProfileModel { Name = newProfileName });
+        }
+
+        
     }
 }
