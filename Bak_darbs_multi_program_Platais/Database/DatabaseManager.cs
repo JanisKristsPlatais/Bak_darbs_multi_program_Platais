@@ -98,7 +98,7 @@ namespace Bak_darbs_multi_program_Platais.Database
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = @"UPDATE Profiles SET Name = $newName WHERE Id = $profileId";
-                    command.Parameters.AddWithValue("newName", newName);
+                    command.Parameters.AddWithValue("$newName", newName);
                     command.Parameters.AddWithValue("$profileId", profileId);
                     command.ExecuteNonQuery();
                 }
