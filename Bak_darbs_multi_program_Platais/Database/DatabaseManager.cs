@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Bak_darbs_multi_program_Platais.Models;
 using System.Data.SQLite;
+using System.Globalization;
+using System.Windows.Input;
+using Bak_darbs_multi_program_Platais.Models;
 
 namespace Bak_darbs_multi_program_Platais.Database
 {
@@ -36,6 +38,17 @@ namespace Bak_darbs_multi_program_Platais.Database
                             X INTEGER DEFAULT 0,
                             Y INTEGER DEFAULT 0,
                             FOREIGN KEY(ProfileId) REFERENCES Profiles(Id) ON DELETE CASCADE);";
+                    command.ExecuteNonQuery();
+                }
+                using (var command = connection.CreateCommand())
+                { //create hotkey table
+                    command.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Hotkeys(
+                            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            MainKey TEXT NOT NULL,
+                            Ctrl INTEGER NOT NULL,
+                            Shift INTEGER NOT NULL,
+                            Alt INTEGER NOT NULL);";
                     command.ExecuteNonQuery();
                 }
             }
@@ -285,6 +298,50 @@ namespace Bak_darbs_multi_program_Platais.Database
                 }
             }
 
+        }
+        //hotkey--------------
+        public static void SaveHotkey(CustomHotkey hotkey) {
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand()){
+                    command.CommandText = @"
+                        DELETE FROM Hotkeys"; //clear existing hotkey
+                    command.ExecuteNonQuery();
+                }
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+                        INSERT INTO Hotkeys (MainKey, Ctrl, Shift, Alt) VALUES($mainKey, $ctrl, $shift, $alt)";
+                    command.Parameters.AddWithValue("$mainKey", hotkey.MainKey.ToString());
+                    command.Parameters.AddWithValue("$ctrl", hotkey.Ctrl ? 1 : 0);
+                    command.Parameters.AddWithValue("$shift", hotkey.Shift ? 1 : 0);
+                    command.Parameters.AddWithValue("$alt", hotkey.Alt ? 1 : 0);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+        public static CustomHotkey LoadHotkey() {
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+                        SELECT MainKey, Ctrl, Shift, Alt FROM Hotkeys LIMIT 1;";
+                    using (var reader = command.ExecuteReader()) {
+                        if (reader.Read()) {
+                            return new CustomHotkey { 
+                                MainKey = (Key)Enum.Parse(typeof(Key),reader.GetString(0)),
+                                Ctrl = reader.GetInt32(1) == 1,
+                                Shift = reader.GetInt32(2) == 1,
+                                Alt = reader.GetInt32(3) == 1,
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
         }
     }
 }

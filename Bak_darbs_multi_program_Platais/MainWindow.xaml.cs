@@ -30,6 +30,14 @@ namespace Bak_darbs_multi_program_Platais
             this.PreviewKeyDown += MainWindow_PreviewKeyDown;
             LoadProfiles();
 
+            //load saved hotkey
+            var savedHotkey = DatabaseManager.LoadHotkey();
+            if (savedHotkey != null) { 
+                launchHotkey = savedHotkey;
+                UpdateHotkeyLabel();
+            }
+
+
             var dbProfiles = DatabaseManager.GetProfiles();
             if (dbProfiles.Count == 0) {
                 DatabaseManager.AddProfile("Profile 1");
@@ -82,6 +90,7 @@ namespace Bak_darbs_multi_program_Platais
             };
 
             UpdateHotkeyLabel();
+            DatabaseManager.SaveHotkey(launchHotkey);
             MessageBox.Show($"New hotkey set: {launchHotkey}");
             EndHotkeyCapture();
         }
