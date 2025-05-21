@@ -88,9 +88,26 @@ namespace Bak_darbs_multi_program_Platais.Database
             }
         }
 
-        public static void UpdateProfileName(string oldName, string newName) {
+
+        public static bool ProfileNameExists(string name)
+        {
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"SELECT COUNT(*) FROM Profiles WHERE Name=$name";
+                    command.Parameters.AddWithValue("$name", name);
+                    return Convert.ToInt32(command.ExecuteScalar())>0;
+                }
+            }
+        }
+        public static bool UpdateProfileName(string oldName, string newName) {
+            if (string.IsNullOrWhiteSpace(newName) || oldName == newName) return false;
+            if (ProfileNameExists(newName)) return false;
+
             int profileId = GetProfileId(oldName);
-            if (profileId == -1) return;
+            if (profileId == -1) return false;
 
             using (var connection = new SQLiteConnection($"Data Source={dbFile}")) {
                 connection.Open();
@@ -101,7 +118,7 @@ namespace Bak_darbs_multi_program_Platais.Database
                     command.Parameters.AddWithValue("$newName", newName);
                     command.Parameters.AddWithValue("$profileId", profileId);
                     command.ExecuteNonQuery();
-                }
+                } return true;
                 }
         }
         public static void DeleteProfile(string profileName)

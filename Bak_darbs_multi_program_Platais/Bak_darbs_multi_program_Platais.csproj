@@ -123,6 +123,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Windows\ProfileInfoWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Windows\ProgramInfoWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -131,6 +135,9 @@
   <ItemGroup>
     <Compile Include="Models\CustomHotkey.cs" />
     <Compile Include="Models\ProgramModel.cs" />
+    <Compile Include="Windows\ProfileInfoWindow.xaml.cs">
+      <DependentUpon>ProfileInfoWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Windows\ProgramInfoWindow.xaml.cs">
       <DependentUpon>ProgramInfoWindow.xaml</DependentUpon>
     </Compile>

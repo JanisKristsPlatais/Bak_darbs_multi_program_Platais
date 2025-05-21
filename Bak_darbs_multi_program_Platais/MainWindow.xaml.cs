@@ -9,6 +9,7 @@ using Bak_darbs_multi_program_Platais.Models;
 using Bak_darbs_multi_program_Platais.Services;
 using System.Collections.ObjectModel;
 using Bak_darbs_multi_program_Platais.Database;
+using Bak_darbs_multi_program_Platais.Windows;
 
 namespace Bak_darbs_multi_program_Platais
 {
@@ -325,17 +326,11 @@ namespace Bak_darbs_multi_program_Platais
 
         private void LaunchAllButton_Click(object sender, RoutedEventArgs e) //launch all programs = press all open buttons
         {
-            foreach (var stackPanel in ProgramsWrapPanel.Children.OfType<StackPanel>())
-            {
-                if (stackPanel.Children[0] is Grid grid)
-                {
-                    foreach (var child in grid.Children.OfType<Button>())
-                    {
-                        if (child.Tag is ProgramModel program && program != null && !string.IsNullOrWhiteSpace(program.Path) && child.Content.ToString() == "O")
-                        {
-                            RoutedEventArgs args = new RoutedEventArgs();
-                            OpenButton_Click(child, args);
-
+            foreach (var stackPanel in ProgramsWrapPanel.Children.OfType<StackPanel>()){
+                if (stackPanel.Children[0] is Grid grid){
+                    foreach (var child in grid.Children.OfType<Button>().Where(b => b.Content.ToString() == "O")){
+                        if (child.Tag is ProgramModel program && !string.IsNullOrWhiteSpace(program.Path)){
+                            OpenButton_Click(child, new RoutedEventArgs());
                         }
                     }
                 }
@@ -382,62 +377,6 @@ namespace Bak_darbs_multi_program_Platais
             UpdateAddButtonVisibility();
         }
 
-        private void RenameProfile_Click(object sender, RoutedEventArgs e)
-        {
-            Button button = sender as Button;
-            string profileName = button.Tag.ToString();
-
-            var selectedItem = ProfileCombobox.ItemContainerGenerator.ContainerFromItem(button.DataContext) as FrameworkElement;
-            var textBlock = selectedItem?.FindName("ProfileNameTextBlock") as TextBlock;
-            var textBox = selectedItem?.FindName("ProfileNameTextBox") as TextBox;
-
-            if (textBlock != null && textBox != null) { 
-                textBlock.Visibility = Visibility.Collapsed;
-                textBox.Visibility = Visibility.Visible;
-                textBox.Focus();
-            }
-            textBox.KeyDown += (s, keyEventArgs) =>
-            {
-                if (keyEventArgs.Key == Key.Enter) { 
-                    textBlock.Text = textBox.Text;
-                    textBlock.Visibility = Visibility.Visible;
-                    textBox.Visibility = Visibility.Collapsed;
-
-                    ProfileModel profile = profiles.FirstOrDefault(p => p.Name == profileName);
-                    if (profile != null) { 
-                        profile.Name = textBox.Text;
-                        DatabaseManager.UpdateProfileName(profileName, textBox.Text);
-                    }
-                }
-            };
-
-        }
-
-        private void ProfileNameTextBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            TextBox textBox = sender as TextBox;
-            textBox.IsReadOnly = false;
-        }
-
-        private void ProfileNameTextBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            TextBox textbox = sender as TextBox;
-            textbox.IsReadOnly = true;
-            
-            string oldName = textbox.Tag.ToString();
-            string newName = textbox.Text;
-
-            if (oldName != newName)
-            {
-                ProfileModel profile = profiles.FirstOrDefault(p=>p.Name == oldName);
-                if (profile != null) {
-                    profile.Name = newName;
-                    DatabaseManager.UpdateProfileName(oldName, newName);
-                }
-
-            }
-
-        }
         private void DeleteProfile_Click(object sender, RoutedEventArgs e)
         {
             if (profiles.Count <= 1) { MessageBox.Show("Cannot Delete The Last Profile!"); return; }
@@ -452,6 +391,39 @@ namespace Bak_darbs_multi_program_Platais
             if (ProfileCombobox.SelectedIndex == -1 && profiles.Count > 0)
             {
                 ProfileCombobox.SelectedIndex = 0;
+            }
+        }
+        private void EditProfile_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            string oldName = button.Tag.ToString();
+            bool validNameEntered = false;
+
+            while (!validNameEntered) { 
+
+            var profileInfoWindow = new ProfileInfoWindow("Rename Profile", "Enter new profile name:", oldName);
+                if (profileInfoWindow.ShowDialog() == true)
+                {
+                    string newName = profileInfoWindow.ResponseText;
+                    if (!string.IsNullOrWhiteSpace(newName) && newName != oldName)
+                    {
+                        ProfileModel profile = profiles.FirstOrDefault(p => p.Name == oldName);
+                        if (profile != null)
+                        {
+                            if (DatabaseManager.UpdateProfileName(oldName, newName))
+                            {
+                                profile.Name = newName;
+                                ProfileCombobox.SelectedItem = profile;
+                                LoadProfiles();
+                                ProfileCombobox.SelectedItem = profiles.FirstOrDefault(p => p.Name == newName);
+                                ProfileCombobox_SelectionChanged(ProfileCombobox, null);
+                                validNameEntered = true;
+                            }
+                            else MessageBox.Show("Failed to update profile name. The name may already exist.", "Error",
+                                                  MessageBoxButton.OK, MessageBoxImage.Error);
+                        }else validNameEntered = true;
+                    }
+                } else validNameEntered = true;
             }
         }
 
