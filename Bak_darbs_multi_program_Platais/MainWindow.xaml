@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Bak_darbs_multi_program_Platais"
         mc:Ignorable="d"
-        Title="MainWindow" Height="850" Width="750">
+        Title="MainWindow" Height="800" Width="750">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Profile and ComboBox row-->
@@ -46,6 +46,10 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
             <Button Content="➕" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="50" Height="32" Click="CreateProfile_Click" Margin="0,0,45,5"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,50,18" Grid.Row="3">
+            <Button Content="Import Profile" Width="100" Height="25" Margin="5,0,15,0" Click="ImportProfile_Click"/>
+            <Button Content="Export Profile" Width="100" Height="25" Margin="5,0" Click="ExportProfile_Click"/>
         </StackPanel>
 
 

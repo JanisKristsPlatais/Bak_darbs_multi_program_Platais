@@ -127,7 +127,7 @@ namespace Bak_darbs_multi_program_Platais
         //empty and add button------------
         private void AddEmptyButton_Click(object sender, RoutedEventArgs e){ AddEmptyProgramTile(); }
         private void CreateEmptyProgramButton() {
-            for (int i = 0; i < 12; i++) {       // how many empty buttons
+            for (int i = 0; i < 4; i++) {       // how many empty buttons
                 AddEmptyProgramTile();}
         }
         private void AddEmptyProgramTile(){ //make and add empty button to tile layout
@@ -192,6 +192,7 @@ namespace Bak_darbs_multi_program_Platais
             }
         }
         private bool isLoadingFromDatabase = false; //used to prevent duplicates
+
 
 
         //program button------------
@@ -370,7 +371,7 @@ namespace Bak_darbs_multi_program_Platais
 
             foreach (var program in loadedPrograms) CreateProgramTile(program);
 
-            CreateEmptyProgramButton();
+            if(loadedPrograms.Count == 0 ) CreateEmptyProgramButton();
             if(ProgramsWrapPanel.Children.Contains(AddEmptyButton)) ProgramsWrapPanel.Children.Remove(AddEmptyButton);
             ProgramsWrapPanel.Children.Add(AddEmptyButton);
             isLoadingFromDatabase = false;
@@ -438,6 +439,55 @@ namespace Bak_darbs_multi_program_Platais
             profiles.Add(new ProfileModel { Name = newProfileName });
         }
 
-        
+        private void ImportProfile_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog { 
+                DefaultExt = ".json",
+                Filter = "JSON Files (*.json)|.json"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                try { 
+                    string json = System.IO.File.ReadAllText(dialog.FileName);
+                    var importedProfile = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<ProgramModel>>>(json);
+                    if (importedProfile != null && importedProfile.Count > 0) {
+                        var profileName = importedProfile.Keys.First();
+                        var programs = importedProfile[profileName];
+
+                        DatabaseManager.AddProfile(profileName);
+                        foreach (var program in programs) DatabaseManager.SaveProgram(program.Name, program.Path, profileName, program.X, program.Y);
+                        LoadProfiles();
+                        ProfileCombobox.SelectedItem = profiles.FirstOrDefault(p=>p.Name == profileName);
+                        MessageBox.Show("Profile imported successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }catch(Exception ex) {
+                    MessageBox.Show($"Error importing profile: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void ExportProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if(ProfileCombobox.SelectedItem == null) return;
+            var profileName = ProfileCombobox.SelectedItem.ToString();
+            var programs = DatabaseManager.GetProgramsByProfile(profileName);
+            var exportData = new Dictionary<string, List<ProgramModel>>{ { profileName, programs } };
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                DefaultExt = ".json",
+                Filter = "JSON Files (*.json)|.json",
+                FileName = $"{profileName}.json"
+            };
+            if (dialog.ShowDialog() == true) {
+                try {
+                    string json = System.Text.Json.JsonSerializer.Serialize(exportData, new System.Text.Json.JsonSerializerOptions { WriteIndented=true});
+                    System.IO.File.WriteAllText(dialog.FileName, json);
+                    MessageBox.Show("Profile exported successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex) {
+                    MessageBox.Show($"Error exporting profile: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
     }
 }
