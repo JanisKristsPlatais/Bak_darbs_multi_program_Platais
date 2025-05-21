@@ -26,15 +26,20 @@ namespace Bak_darbs_multi_program_Platais
             InitializeComponent();
 
             DatabaseManager.InitializeDatabase();
+            this.PreviewKeyDown += MainWindow_PreviewKeyDown;
             LoadProfiles();
 
-            this.PreviewKeyDown += MainWindow_PreviewKeyDown;
+            var dbProfiles = DatabaseManager.GetProfiles();
+            if (dbProfiles.Count == 0) {
+                DatabaseManager.AddProfile("Profile 1");
+                profiles.Add(new ProfileModel { Name = "Profile 1" });
+            }
 
-            profiles.Add(new ProfileModel { Name = "Profile 1" });
             ProfileCombobox.ItemsSource = profiles;
+            ProfileCombobox.SelectionChanged += ProfileCombobox_SelectionChanged;
+            if(ProfileCombobox.Items.Count > 0) ProfileCombobox.SelectedIndex = 0;
 
             UpdateHotkeyLabel();
-            CreateEmptyProgramButton();
             
         }
 
@@ -122,7 +127,8 @@ namespace Bak_darbs_multi_program_Platais
         private void AddEmptyButton_Click(object sender, RoutedEventArgs e){ AddEmptyProgramTile(); }
         private void CreateEmptyProgramButton() {
             for (int i = 0; i < 12; i++) {       // how many empty buttons
-                AddEmptyProgramTile();}}
+                AddEmptyProgramTile();}
+        }
         private void AddEmptyProgramTile(){ //make and add empty button to tile layout
             var emptyButton = new Button{
                 Content = "Click or Drag here",
@@ -139,7 +145,10 @@ namespace Bak_darbs_multi_program_Platais
             var stackPanel = new StackPanel { Orientation = Orientation.Vertical };
             stackPanel.Children.Add(grid);
 
-            ProgramsWrapPanel.Children.Insert(ProgramsWrapPanel.Children.Count - 1, stackPanel);
+            if (ProgramsWrapPanel.Children.Contains(AddEmptyButton)){ //add button before "+" button so that that would be last
+                int insertIndex = ProgramsWrapPanel.Children.IndexOf(AddEmptyButton);
+                ProgramsWrapPanel.Children.Insert(insertIndex, stackPanel);
+            }else ProgramsWrapPanel.Children.Add(stackPanel);
             UpdateAddButtonVisibility();
         }
        
@@ -160,17 +169,28 @@ namespace Bak_darbs_multi_program_Platais
             Width = 150, Height = 100, 
             Margin = new Thickness(10), 
             Tag = program }; //store program info in button
+
             programButton.Click += ProgramButton_Click;
             programButton.AllowDrop = true;
             programButton.Drop += ProgramButton_Drop;
 
-            var grid = CreateProgramGrid(programButton, null);
+            var grid = CreateProgramGrid(programButton, program);
             var stackPanel = new StackPanel { Orientation = Orientation.Vertical };
             stackPanel.Children.Add(grid);
 
-            ProgramsWrapPanel.Children.Add(stackPanel);
-            DatabaseManager.SaveProgram(program.Name, program.Path, ProfileCombobox.SelectedItem.ToString(), program.X, program.Y);
+            if (ProgramsWrapPanel.Children.Contains(AddEmptyButton))
+            {
+                int insertIndex = ProgramsWrapPanel.Children.IndexOf(AddEmptyButton);
+                ProgramsWrapPanel.Children.Insert(insertIndex, stackPanel);
+            }
+            else ProgramsWrapPanel.Children.Add(stackPanel);
+
+            if (!isLoadingFromDatabase && ProfileCombobox.SelectedItem != null) {
+                string profileName = ProfileCombobox.SelectedItem.ToString();
+                DatabaseManager.SaveProgram(program.Name, program.Path, profileName, program.X, program.Y);
+            }
         }
+        private bool isLoadingFromDatabase = false; //used to prevent duplicates
 
 
         //program button------------
@@ -185,9 +205,14 @@ namespace Bak_darbs_multi_program_Platais
                     button.Content = name;
                     button.Tag = program;
                     ConvertToProgramButton(button, program);
+                    if ((ProfileCombobox.SelectedItem as ProfileModel) != null){
+                        string profileName = ProfileCombobox.SelectedItem.ToString();
+                        DatabaseManager.SaveProgram(name, path, profileName, x, y);
+                    }
                 };
                 inputWindow.Show();
             } else {    //has info => update info
+                string oldName = program.Name;
                 var infoWindow = new ProgramInfoWindow(program);
 
                 infoWindow.OnSubmit += (newName, newPath, newX, newY) => { 
@@ -197,6 +222,12 @@ namespace Bak_darbs_multi_program_Platais
                     program.X = newX;
                     program.Y = newY;
                     button.Content = newName;
+
+                    if (ProfileCombobox.SelectedItem != null){
+                        string profileName = ProfileCombobox.SelectedItem.ToString();
+                        DatabaseManager.DeleteProgram(oldName, profileName);
+                        DatabaseManager.UpdateProgram(oldName, newName, newPath, profileName, newX, newY);
+                    }
                 };
                 infoWindow.Show();
             }
@@ -212,6 +243,11 @@ namespace Bak_darbs_multi_program_Platais
                     button.Content = program.Name;
                     button.Tag = program;
                     ConvertToProgramButton(button, program);
+
+                    if (ProfileCombobox.SelectedItem != null) { 
+                        string profileName = ProfileCombobox.SelectedItem.ToString();
+                        DatabaseManager.SaveProgram(program.Name, program.Path, profileName, program.X, program.Y);
+                    }
                 }
             }
         }
@@ -239,7 +275,17 @@ namespace Bak_darbs_multi_program_Platais
             var grid = button.Parent as Grid;
             if (grid != null) {
                 var stackPanel = grid.Parent as StackPanel;
-                if (stackPanel != null) { 
+                if (stackPanel != null) {
+                    foreach (var child in grid.Children) {
+                        if (child is Button programButton && programButton.Tag is ProgramModel program) {
+                            if (ProfileCombobox.SelectedItem != null && program != null){
+                                string currentProfile = ProfileCombobox.SelectedItem.ToString();
+                                DatabaseManager.DeleteProgram(program.Name, currentProfile);  
+                            }
+                            break;
+                        }
+                    }
+
                     ProgramsWrapPanel.Children.Remove(stackPanel); 
                     UpdateAddButtonVisibility();
                 }
@@ -301,35 +347,40 @@ namespace Bak_darbs_multi_program_Platais
         //Profile------------
         public void LoadProfiles()
         {
-            var profiles = DatabaseManager.GetProfiles();
-            ProfileCombobox.ItemsSource = profiles;
-            if(profiles.Count>0) ProfileCombobox.SelectedIndex = 0;
+            profiles.Clear();
+            var dbProfiles = DatabaseManager.GetProfiles();
+            if (dbProfiles.Count == 0) {
+                DatabaseManager.AddProfile("Profile 1");
+                dbProfiles = DatabaseManager.GetProfiles(); //refresh list
+            }
+            foreach (var profile in dbProfiles) {
+                profiles.Add(new ProfileModel { Name = profile });
+            }
+            ProfileCombobox.ItemsSource=profiles;
+            if (profiles.Count > 0 && ProfileCombobox.SelectedIndex == -1) {
+                ProfileCombobox.SelectedIndex = 0;
+            }
         }
 
         private void ProfileCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (ProfileCombobox.SelectedItem == null) return;
+
             ProgramsWrapPanel.Children.Clear();
-            var selectedProfileName = ProfileCombobox.SelectedItem as string;
+            var selectedProfileName = ProfileCombobox.SelectedItem.ToString();
+
+            isLoadingFromDatabase =true;
+
             var loadedPrograms = DatabaseManager.GetProgramsByProfile(selectedProfileName);
-            if (loadedPrograms.Any()) { 
-                foreach(var program in loadedPrograms) CreateProgramTile(program);
-            }
+
+            foreach (var program in loadedPrograms) CreateProgramTile(program);
+
+            CreateEmptyProgramButton();
+            if(ProgramsWrapPanel.Children.Contains(AddEmptyButton)) ProgramsWrapPanel.Children.Remove(AddEmptyButton);
             ProgramsWrapPanel.Children.Add(AddEmptyButton);
-            if (!loadedPrograms.Any()) {
-                CreateEmptyProgramButton();
-            }
+            isLoadingFromDatabase = false;
             UpdateAddButtonVisibility();
-
-            
-            //DisplayPrograms(programs);
-
         }
-        //public void DisplayPrograms(List<ProgramModel> programs) { 
-        //    ProgramsWrapPanel.Children.Clear();
-        //    foreach (var program in programs) {
-                
-        //    }
-        //}
 
         private void RenameProfile_Click(object sender, RoutedEventArgs e)
         {
@@ -365,43 +416,53 @@ namespace Bak_darbs_multi_program_Platais
         private void ProfileNameTextBox_GotFocus(object sender, RoutedEventArgs e)
         {
             TextBox textBox = sender as TextBox;
-            if (textBox != null) textBox.IsReadOnly = false;
+            textBox.IsReadOnly = false;
         }
 
         private void ProfileNameTextBox_LostFocus(object sender, RoutedEventArgs e)
         {
             TextBox textbox = sender as TextBox;
-            if (textbox != null) { 
-                textbox.IsReadOnly = true;
+            textbox.IsReadOnly = true;
+            
+            string oldName = textbox.Tag.ToString();
+            string newName = textbox.Text;
 
-                string oldName = textbox.Tag.ToString();
-                string newName = textbox.Text;
-
-                if (oldName != newName) { 
-                    ProfileModel profile = profiles.FirstOrDefault(p => p.Name == oldName);
-                    if (profile != null) {
-                        profile.Name = newName;
-                        DatabaseManager.UpdateProfileName(oldName, newName);
-                    }
+            if (oldName != newName)
+            {
+                ProfileModel profile = profiles.FirstOrDefault(p=>p.Name == oldName);
+                if (profile != null) {
+                    profile.Name = newName;
+                    DatabaseManager.UpdateProfileName(oldName, newName);
                 }
+
             }
 
         }
         private void DeleteProfile_Click(object sender, RoutedEventArgs e)
         {
-            Button button = sender as Button;
-            string profileName = button.Tag.ToString();
+            if (profiles.Count <= 1) { MessageBox.Show("Cannot Delete The Last Profile!"); return; }
+            var button = sender as Button;
+            string profileName = button.Tag as string;
 
-            ProfileModel profile = profiles.FirstOrDefault(p => p.Name == profileName);
-            if (profile != null) { 
-                profiles.Remove(profile);
-                ProfileCombobox.ItemsSource = profiles;
+            DatabaseManager.DeleteProfile(profileName);
+            for (int i = 0; i < profiles.Count; i++) {
+                if (profiles[i].Name == profileName) { profiles.RemoveAt(i); break; }
+            }
+
+            if (ProfileCombobox.SelectedIndex == -1 && profiles.Count > 0)
+            {
+                ProfileCombobox.SelectedIndex = 0;
             }
         }
 
         private void CreateProfile_Click(object sender, RoutedEventArgs e)
         {
-            string newProfileName = "Profile " + (profiles.Count + 1);
+            var existingNumbers = profiles.Select(p => int.TryParse(p.Name.Replace("Profile ", ""), out int num) ? num : 0).ToList();
+            int nextNumber = 1;
+            while (existingNumbers.Contains(nextNumber)) nextNumber++;
+
+            string newProfileName = $"Profile {nextNumber}";
+            DatabaseManager.AddProfile(newProfileName);
             profiles.Add(new ProfileModel { Name = newProfileName });
         }
 

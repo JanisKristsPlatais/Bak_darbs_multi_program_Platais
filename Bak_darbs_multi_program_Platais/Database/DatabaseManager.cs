@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Bak_darbs_multi_program_Platais.Models;
 using System.Data.SQLite;
-using SQLitePCL;
 
 namespace Bak_darbs_multi_program_Platais.Database
 {
@@ -90,17 +89,44 @@ namespace Bak_darbs_multi_program_Platais.Database
         }
 
         public static void UpdateProfileName(string oldName, string newName) {
+            int profileId = GetProfileId(oldName);
+            if (profileId == -1) return;
+
             using (var connection = new SQLiteConnection($"Data Source={dbFile}")) {
                 connection.Open();
 
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = @"UPDATE Profiles SET Name = $newName WHERE Name = $oldName";
-                    command.Parameters.AddWithValue("$oldName", oldName);
-                    command.Parameters.AddWithValue("$newName", newName);
+                    command.CommandText = @"UPDATE Profiles SET Name = $newName WHERE Id = $profileId";
+                    command.Parameters.AddWithValue("newName", newName);
+                    command.Parameters.AddWithValue("$profileId", profileId);
                     command.ExecuteNonQuery();
                 }
                 }
+        }
+        public static void DeleteProfile(string profileName)
+        {
+            int profileId = GetProfileId(profileName);
+            if (profileId == -1) return;
+
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+            {
+                connection.Open();
+                //deleted program info thats connected to profile
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"DELETE FROM Programs WHERE ProfileId = $profileId";
+                    command.Parameters.AddWithValue("$profileId", profileId);
+                    command.ExecuteNonQuery();
+                }
+                //delte profile
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"DELETE FROM Profiles WHERE Id = $profileId";
+                    command.Parameters.AddWithValue("$profileId", profileId);
+                    command.ExecuteNonQuery();
+                }
+            }
         }
 
         //programs--------------
@@ -112,7 +138,69 @@ namespace Bak_darbs_multi_program_Platais.Database
                 AddProfile(profileName);
                 profileId = GetProfileId(profileName);
             }
+            //check if program exists in profile
+            bool programExists = false;
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+                        SELECT COUNT(*) FROM Programs WHERE ProgramName = $programName AND ProfileId = $profileId";
+                    command.Parameters.AddWithValue("$programName", programName);
+                    command.Parameters.AddWithValue("$profileId", profileId);
 
+                    var result = command.ExecuteScalar();
+                    programExists = Convert.ToInt32(result) > 0;
+                }
+            }
+
+            if (programExists)
+            {
+                using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+                {
+                    connection.Open();
+
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = @"
+                            UPDATE Programs SET ProgramPath = $programPath, X = $x, Y = $y 
+                            WHERE ProgramName = $programName AND ProfileId = $profileId";
+                        command.Parameters.AddWithValue("$programName", programName);
+                        command.Parameters.AddWithValue("$programPath", programPath);
+                        command.Parameters.AddWithValue("$profileId", profileId);
+                        command.Parameters.AddWithValue("$x", x);
+                        command.Parameters.AddWithValue("$y", y);
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+            else {
+                using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+                {
+                    connection.Open();
+
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = @"
+                            INSERT INTO Programs (ProgramName, ProgramPath, ProfileId, X, Y)
+                            VALUES($programName, $programPath, $profileId, $x, $y)";
+                        command.Parameters.AddWithValue("$programName", programName);
+                        command.Parameters.AddWithValue("$programPath", programPath);
+                        command.Parameters.AddWithValue("$profileId", profileId);
+                        command.Parameters.AddWithValue("$x", x);
+                        command.Parameters.AddWithValue("$y", y);
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+        public static void UpdateProgram(string oldProgramName, string newProgramName, string programPath, string profileName, int x, int y) {
+            int profileId = GetProfileId(profileName);
+            if (profileId == -1) {
+                AddProfile(profileName);
+                profileId = GetProfileId(profileName);
+            }
             using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
             {
                 connection.Open();
@@ -120,46 +208,49 @@ namespace Bak_darbs_multi_program_Platais.Database
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = @"
-                        INSERT INTO Programs (ProgramName, ProgramPath, ProfileId, X, Y)
-                        VALUES($programName, $programPath, $profileId, $x, $y)";
-                    command.Parameters.AddWithValue("$programName", programName);
+                        UPDATE Programs 
+                        SET ProgramName = $newProgramName, ProgramPath = $programPath, ProfileId=$profileId, X=$x, Y=$y
+                        WHERE ProgramName = $oldProgramName AND ProfileId = $profileId";
+                    command.Parameters.AddWithValue("$oldProgramName", oldProgramName);
+                    command.Parameters.AddWithValue("$newProgramName", newProgramName);
                     command.Parameters.AddWithValue("$programPath", programPath);
                     command.Parameters.AddWithValue("$profileId", profileId);
                     command.Parameters.AddWithValue("$x", x);
                     command.Parameters.AddWithValue("$y", y);
-                    command.ExecuteNonQuery();
+
+                    int rowsAffected = command.ExecuteNonQuery();
+                    if(rowsAffected == 0) SaveProgram(newProgramName, programPath, profileName, x, y);
                 }
             }
         }
+
         public static List<ProgramModel> GetProgramsByProfile(string profileName) { 
             var programs = new List<ProgramModel>();
-            int profileId = GetProfileId(profileName);
-            if(profileId == -1) return programs;
 
             using (var connection = new SQLiteConnection($"Data Source={dbFile}")) { 
                 connection.Open();
 
                 using (var command = connection.CreateCommand()){
                     command.CommandText = @"
-                        SELECT ProgramName, ProgramPath, X, Y FROM Programs WHERE ProfileId = $profileId";
-                    command.Parameters.AddWithValue("$profileId", profileId);
+                        SELECT ProgramName, ProgramPath, X, Y FROM Programs
+                        INNER JOIN Profiles ON Programs.ProfileId = Profiles.Id WHERE Profiles.Name = $profileName";
+                    command.Parameters.AddWithValue("$profileName", profileName);
                     using (var reader = command.ExecuteReader()) {
                         while (reader.Read()) {
-                            var program = new ProgramModel {
-                                 ProgramName = reader.GetString(0),
-                                 Path = reader.GetString(1),
-                                    X = reader.GetInt32(2),
-                                    Y = reader.GetInt32(3),
-                                    Name = reader.GetString(0)
-                            };
-                            
-                            programs.Add(program);
+                            programs.Add(new ProgramModel {
+                                ProgramName = reader.GetString(0),
+                                Name = System.IO.Path.GetFileName(reader.GetString(1)),
+                                Path = reader.GetString(1),
+                                X = reader.GetInt32(2),
+                                Y = reader.GetInt32(3),
+                            });
                         }
                     }
                 }
             }
             return programs;
         }
+
         public static void DeleteProgram(string programName, string profileName) {
             int profileId = GetProfileId(profileName);
             if (profileId == -1) return;

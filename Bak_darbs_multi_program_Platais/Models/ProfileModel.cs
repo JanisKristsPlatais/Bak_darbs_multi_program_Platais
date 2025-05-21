@@ -9,5 +9,9 @@ namespace Bak_darbs_multi_program_Platais.Models
     public class ProfileModel
     {
         public string Name { get; set; }
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }
