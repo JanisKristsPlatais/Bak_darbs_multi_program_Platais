@@ -475,9 +475,42 @@ namespace Bak_darbs_multi_program_Platais
             }
         }
 
+        private void ScanActivePrograms_Click(object sender, RoutedEventArgs e){
+            try {
+                var activeWindows = WindowManager.GetActiveWindows();
+                if (activeWindows.Count == 0){
+                    MessageBox.Show("No active programs found / insufficient permissions.\nTry running the application as administrator.",
+                        "No Programs Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                //make new profile
+                var existingNumbers = profiles.Select(p => int.TryParse(p.Name.Replace("Scan ", ""), out int num) ? num : 0).ToList();
+                int nextNumber = 1;
+                while (existingNumbers.Contains(nextNumber)) nextNumber++;
+                string newProfileName = $"Scan {nextNumber}";
+
+                DatabaseManager.AddProfile(newProfileName);
+                profiles.Add(new ProfileModel { Name = newProfileName });
+
+                foreach (var program in activeWindows){
+                    DatabaseManager.SaveProgram(program.Name, program.Path, newProfileName, program.X, program.Y);
+                }
+                // Switch to new profile
+                ProfileCombobox.SelectedItem = profiles.FirstOrDefault(p => p.Name == newProfileName);
+                MessageBox.Show($"Added {activeWindows.Count} programs to new profile: {newProfileName}",
+                    "Scan Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error scanning active programs: {ex.Message}\nTry running the application as administrator.",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void ExportProfile_Click(object sender, RoutedEventArgs e)
         {
-            if(ProfileCombobox.SelectedItem == null) return;
+            if (ProfileCombobox.SelectedItem == null) return;
             var profileName = ProfileCombobox.SelectedItem.ToString();
             var programs = DatabaseManager.GetProgramsByProfile(profileName);
             var exportData = new Dictionary<string, List<ProgramModel>>{ { profileName, programs } };

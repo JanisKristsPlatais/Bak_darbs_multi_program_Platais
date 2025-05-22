@@ -8,10 +8,14 @@
         Title="MainWindow" Height="800" Width="750">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Profile and ComboBox row-->
-            <RowDefinition Height="*"/> <!-- WrapPanel with Program buttons-->
-            <RowDefinition Height="Auto"/> <!-- Launch All button row-->
-            <RowDefinition Height="Auto"/><!-- Hotkey settings row-->
+            <RowDefinition Height="Auto"/>
+            <!-- Profile and ComboBox row-->
+            <RowDefinition Height="*"/>
+            <!-- WrapPanel with Program buttons-->
+            <RowDefinition Height="Auto"/>
+            <!-- Launch All button row-->
+            <RowDefinition Height="Auto"/>
+            <!-- Hotkey settings row-->
         </Grid.RowDefinitions>
 
 
@@ -22,14 +26,14 @@
                 <Button x:Name="AddEmptyButton" Content="+" FontSize="40" Width="150" Height="100" Margin="10" Click="AddEmptyButton_Click" />
             </WrapPanel>
         </ScrollViewer>
-        
+
         <!-- Launch all and hotkey-->
         <Button x:Name="LaunchAllButton" Content="Launch All" HorizontalAlignment="Left" Margin="20,10,0,20" VerticalAlignment="Bottom" Width="180" Height="90" Click="LaunchAllButton_Click" Grid.Row="2"/>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="20,0,0,15" Grid.Row="3">
             <Button x:Name="ChangeHotkeyButton" Content="Set Hotkey" Width="90" Height="20" Click="ChangeHotkeyButton_Click"></Button>
             <Label x:Name="HotkeyLabel" AutomationProperties.Name="Current: Ctrl + Q" VerticalAlignment="Center" Margin="10,0,0,0"></Label>
         </StackPanel>
-        
+
         <!-- Profile-->
         <StackPanel Orientation="Horizontal" Margin="10,10,10,16" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="2">
             <Label Content="Profile:" Margin="5" VerticalAlignment="Bottom" HorizontalAlignment="Right" />
@@ -48,12 +52,15 @@
             <Button Content="➕" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="50" Height="32" Click="CreateProfile_Click" Margin="0,0,45,5"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,50,18" Grid.Row="3">
-            <Button Content="Import Profile" Width="100" Height="25" Margin="5,0,15,0" Click="ImportProfile_Click"/>
-            <Button Content="Export Profile" Width="100" Height="25" Margin="5,0" Click="ExportProfile_Click"/>
+            <Label Content="Beta" FontSize="10"/>
+            <Button x:Name="ScanActivePrograms" Content="✨Scan Programs" Width="100" Height="25" Margin="0,0,15,0" Click="ScanActivePrograms_Click"/>
+            <Button x:Name="ImportProfile" Content="Import Profile" Width="100" Height="25" Margin="5,0,15,0" Click="ImportProfile_Click"/>
+            <Button x:Name="ExportProfile" Content="Export Profile" Width="100" Height="25" Margin="5,0" Click="ExportProfile_Click"/>
         </StackPanel>
 
 
 
+
     </Grid>
-    
+
 </Window>
