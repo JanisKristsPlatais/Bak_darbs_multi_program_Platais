@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Globalization;
 using System.Windows.Input;
 using Bak_darbs_multi_program_Platais.Models;
 

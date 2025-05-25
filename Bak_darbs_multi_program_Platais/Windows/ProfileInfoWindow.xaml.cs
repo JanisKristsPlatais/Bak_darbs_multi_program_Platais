@@ -1,16 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace Bak_darbs_multi_program_Platais.Windows
 {
@@ -27,7 +16,12 @@ namespace Bak_darbs_multi_program_Platais.Windows
             MessageText.Text = message;
             ResponseText = defaultValue;
             ResponseTextBox.SelectAll();
+
+            Services.ThemeManager.ApplyTheme(this);
+            Services.ThemeManager.ThemeChanged += OnThemeChanged;
+            this.Closed += (s, e) => Services.ThemeManager.ThemeChanged -= OnThemeChanged;
         }
+        private void OnThemeChanged(string newTheme) { Services.ThemeManager.ApplyTheme(this); }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {

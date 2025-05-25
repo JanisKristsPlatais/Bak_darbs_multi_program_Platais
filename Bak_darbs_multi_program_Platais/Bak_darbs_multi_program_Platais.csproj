@@ -124,6 +124,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Models\ProfileModel.cs" />
+    <Compile Include="Services\ThemeManager.cs" />
     <Compile Include="Services\WindowManager.cs" />
     <Page Include="Windows\CoordCaptureWindow.xaml">
       <SubType>Designer</SubType>

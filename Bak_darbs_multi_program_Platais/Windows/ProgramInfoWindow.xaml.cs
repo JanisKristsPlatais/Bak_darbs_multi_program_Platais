@@ -16,7 +16,12 @@ namespace Bak_darbs_multi_program_Platais
             program = existingProgram ?? new ProgramModel(); //checks if its existing or new program
             SetProgramInfo(program);
             UpdateCoordButtonState();
+
+            Services.ThemeManager.ApplyTheme(this);
+            Services.ThemeManager.ThemeChanged += OnThemeChanged;
+            this.Closed += (s, e) => Services.ThemeManager.ThemeChanged -= OnThemeChanged;
         }
+        private void OnThemeChanged(string newTheme){  Services.ThemeManager.ApplyTheme(this);}
 
         //program info
         public void SetProgramInfo(ProgramModel program) {

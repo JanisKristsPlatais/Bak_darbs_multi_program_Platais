@@ -15,7 +15,6 @@ namespace Bak_darbs_multi_program_Platais
 {
     public partial class MainWindow : Window
     {
-        private List<ProgramModel> programs = new List<ProgramModel>();
         private CustomHotkey launchHotkey = new CustomHotkey { Ctrl = true, MainKey = Key.Q }; //default is Ctrl+Q
         private bool isCapturingHotkey = false;
 
@@ -48,8 +47,19 @@ namespace Bak_darbs_multi_program_Platais
             ProfileCombobox.SelectionChanged += ProfileCombobox_SelectionChanged;
             if(ProfileCombobox.Items.Count > 0) ProfileCombobox.SelectedIndex = 0;
 
+            ThemeCombobox.SelectedIndex = 0;
+            ThemeManager.CurrentTheme = "Default";
+            ThemeManager.ApplyTheme(this, "Default");
             UpdateHotkeyLabel();
             
+        }
+
+        //Theme selection----
+        private void ThemeCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e){
+            if (ThemeCombobox.SelectedItem is ComboBoxItem selectedItem){
+                ThemeManager.CurrentTheme = selectedItem.Tag.ToString();
+                ThemeManager.ApplyTheme(this);
+            }
         }
 
 
@@ -65,7 +75,7 @@ namespace Bak_darbs_multi_program_Platais
         private void ChangeHotkeyButton_Click(object sender, RoutedEventArgs e) { //lets user change hotkey
             if (!isCapturingHotkey) { 
                 isCapturingHotkey = true;
-                HotkeyLabel.Content = ("Press your hotkey combination. (ESC to cancel)");
+                HotkeyLabel.Content = ("Press your hotkey combination.\n (ESC to cancel)");
                 this.PreviewKeyDown -= CaptureHotkey;
                 this.PreviewKeyDown += CaptureHotkey;
             }
@@ -164,6 +174,7 @@ namespace Bak_darbs_multi_program_Platais
        
 
         private void UpdateAddButtonVisibility() { 
+            ThemeManager.ApplyTheme(this);
             int programTileCount = ProgramsWrapPanel.Children
                 .OfType<StackPanel>().
                 Count(sp=>sp.Children.OfType<Grid>().Any());        //count program buttons
@@ -385,6 +396,7 @@ namespace Bak_darbs_multi_program_Platais
             ProgramsWrapPanel.Children.Add(AddEmptyButton);
             isLoadingFromDatabase = false;
             UpdateAddButtonVisibility();
+            ThemeManager.ApplyTheme(this);
         }
 
         private void DeleteProfile_Click(object sender, RoutedEventArgs e)
@@ -474,9 +486,32 @@ namespace Bak_darbs_multi_program_Platais
                 }
             }
         }
+        private void ExportProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProfileCombobox.SelectedItem == null) return;
+            var profileName = ProfileCombobox.SelectedItem.ToString();
+            var programs = DatabaseManager.GetProgramsByProfile(profileName);
+            var exportData = new Dictionary<string, List<ProgramModel>>{ { profileName, programs } };
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                DefaultExt = ".json",
+                Filter = "JSON Files (*.json)|.json",
+                FileName = $"{profileName}.json"
+            };
+            if (dialog.ShowDialog() == true) {
+                try {
+                    string json = System.Text.Json.JsonSerializer.Serialize(exportData, new System.Text.Json.JsonSerializerOptions { WriteIndented=true});
+                    System.IO.File.WriteAllText(dialog.FileName, json);
+                    MessageBox.Show("Profile exported successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex) {
+                    MessageBox.Show($"Error exporting profile: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
 
-        private void ScanActivePrograms_Click(object sender, RoutedEventArgs e){
-            try {
+        private void ScanActivePrograms_Click(object sender, RoutedEventArgs e) {
+            try{
                 var activeWindows = WindowManager.GetActiveWindows();
                 if (activeWindows.Count == 0){
                     MessageBox.Show("No active programs found / insufficient permissions.\nTry running the application as administrator.",
@@ -505,30 +540,6 @@ namespace Bak_darbs_multi_program_Platais
             {
                 MessageBox.Show($"Error scanning active programs: {ex.Message}\nTry running the application as administrator.",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void ExportProfile_Click(object sender, RoutedEventArgs e)
-        {
-            if (ProfileCombobox.SelectedItem == null) return;
-            var profileName = ProfileCombobox.SelectedItem.ToString();
-            var programs = DatabaseManager.GetProgramsByProfile(profileName);
-            var exportData = new Dictionary<string, List<ProgramModel>>{ { profileName, programs } };
-            var dialog = new Microsoft.Win32.SaveFileDialog
-            {
-                DefaultExt = ".json",
-                Filter = "JSON Files (*.json)|.json",
-                FileName = $"{profileName}.json"
-            };
-            if (dialog.ShowDialog() == true) {
-                try {
-                    string json = System.Text.Json.JsonSerializer.Serialize(exportData, new System.Text.Json.JsonSerializerOptions { WriteIndented=true});
-                    System.IO.File.WriteAllText(dialog.FileName, json);
-                    MessageBox.Show("Profile exported successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex) {
-                    MessageBox.Show($"Error exporting profile: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
             }
         }
     }
