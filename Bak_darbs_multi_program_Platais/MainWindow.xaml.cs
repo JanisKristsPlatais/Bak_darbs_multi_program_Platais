@@ -27,6 +27,12 @@ namespace Bak_darbs_multi_program_Platais
 
             DatabaseManager.InitializeDatabase();
             this.PreviewKeyDown += MainWindow_PreviewKeyDown;
+
+            var (savedWidth, savedHeight) = DatabaseManager.LoadWindowSize();
+            this.Height = savedHeight;
+            this.Width = savedWidth;
+            this.SizeChanged += MainWindow_SizeChanged;
+
             LoadProfiles();
 
             //load saved hotkey
@@ -127,6 +133,10 @@ namespace Bak_darbs_multi_program_Platais
             HotkeyLabel.Content = $"Current: {launchHotkey}";
         }
         private void UpdateHotkeyLabel() { HotkeyLabel.Content = $"Current: {launchHotkey}"; } //updates hotkey label
+
+        private void MainWindow_SizeChanged(object sender, EventArgs e) { 
+            DatabaseManager.SaveWindowSize(this.Width, this.Height);
+        }
 
 
 

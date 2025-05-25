@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Bak_darbs_multi_program_Platais"
         mc:Ignorable="d"
-        Title="MainWindow" Height="800" Width="750">
+        Title="MainWindow" Height="800" Width="750" MinWidth="620" MinHeight="500">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -20,12 +20,14 @@
 
 
         <!-- Program buttons-->
-        <ScrollViewer Margin="10,10,10,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="1">
+        <Border Margin="10" Grid.Row="1" BorderBrush="#CCCCCC" BorderThickness="2" CornerRadius="8">
+        <ScrollViewer Margin="5" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="1">
             <WrapPanel x:Name="ProgramsWrapPanel" AllowDrop="True">
                 <!-- program tiles - buttons added here from code -->
                 <Button x:Name="AddEmptyButton" Content="+" FontSize="40" Width="150" Height="100" Margin="10" Click="AddEmptyButton_Click" />
             </WrapPanel>
         </ScrollViewer>
+        </Border>
 
         <!-- Launch all and hotkey-->
         <Button x:Name="LaunchAllButton" Content="Launch All" HorizontalAlignment="Left" Margin="20,10,0,20" VerticalAlignment="Bottom" Width="180" Height="90" Click="LaunchAllButton_Click" Grid.Row="2"/>

@@ -57,6 +57,13 @@ namespace Bak_darbs_multi_program_Platais.Database
                             ThemeName TEXT NOT NULL);";
                     command.ExecuteNonQuery();
                 }
+                using (var command = connection.CreateCommand()) {
+                    command.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Settings (
+                            Key TEXT PRIMARY KEY,
+                            Value TEXT NOT NULL  );";
+                    command.ExecuteNonQuery();
+                }
             }
         }
 
@@ -390,7 +397,48 @@ namespace Bak_darbs_multi_program_Platais.Database
                     }
                 }
             }
-            return null;
+            return "Default";
+        }
+
+        public static void SaveWindowSize(double width, double height)
+        {
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "INSERT OR REPLACE INTO Settings (Key, Value) VALUES ('WindowWidth', @width)";
+                    command.Parameters.AddWithValue("@width", width.ToString());
+                    command.ExecuteNonQuery();
+                }
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "INSERT OR REPLACE INTO Settings (Key, Value) VALUES ('WindowHeight', @height)";
+                    command.Parameters.AddWithValue("@height", height.ToString());
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+        public static (double width, double height) LoadWindowSize() {
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+            {
+                connection.Open();
+                double width = 750;
+                double height = 800;
+                using (var command = connection.CreateCommand()){
+                    command.CommandText = "SELECT Value FROM Settings WHERE Key = @key";
+                    command.Parameters.AddWithValue("@key", "WindowWidth");
+                    var widthResult = command.ExecuteScalar()?.ToString();
+                    if (double.TryParse(widthResult, out double savedWidth)) width = savedWidth;
+                }
+                using (var command = connection.CreateCommand()){
+                    command.CommandText = "SELECT Value FROM Settings WHERE Key = @key";
+                    command.Parameters.AddWithValue("@key", "WindowHeight");
+                    var heightResult = command.ExecuteScalar()?.ToString();
+                    if (double.TryParse(heightResult, out double savedHeight)) height = savedHeight;
+                }
+                return (width, height);
+            }
         }
     }
 }
