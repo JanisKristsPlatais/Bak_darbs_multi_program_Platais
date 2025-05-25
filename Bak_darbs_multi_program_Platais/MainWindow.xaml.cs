@@ -173,7 +173,7 @@ namespace Bak_darbs_multi_program_Platais
         //empty and add button------------
         private void AddEmptyButton_Click(object sender, RoutedEventArgs e){ AddEmptyProgramTile(); }
         private void CreateEmptyProgramButton() {
-            for (int i = 0; i < 4; i++) {       // how many empty buttons
+            for (int i = 0; i < 8; i++) {       // how many empty buttons
                 AddEmptyProgramTile();}
         }
         private void AddEmptyProgramTile(){ //make and add empty button to tile layout
@@ -314,6 +314,7 @@ namespace Bak_darbs_multi_program_Platais
             }
             button.Click -= ProgramButton_Click; //clear old
             button.Click += ProgramButton_Click; //add new
+            ThemeManager.ApplyTheme(this);
         }
 
 
