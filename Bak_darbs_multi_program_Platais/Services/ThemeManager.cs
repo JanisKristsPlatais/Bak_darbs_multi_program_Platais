@@ -76,9 +76,6 @@ namespace Bak_darbs_multi_program_Platais.Services
 
             foreach (var comboBox in FindVisualChildren<ComboBox>(window))
             {
-                comboBox.Background = buttonBrush;
-                comboBox.Foreground = textBrush;
-
                 var comboBoxItemStyle = new Style(typeof(ComboBoxItem));
 
                 //default appearance

@@ -50,6 +50,13 @@ namespace Bak_darbs_multi_program_Platais.Database
                             Alt INTEGER NOT NULL);";
                     command.ExecuteNonQuery();
                 }
+                using (var command = connection.CreateCommand()){ //create themes table
+                    command.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Themes(
+                            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            ThemeName TEXT NOT NULL);";
+                    command.ExecuteNonQuery();
+                }
             }
         }
 
@@ -336,6 +343,49 @@ namespace Bak_darbs_multi_program_Platais.Database
                                 Shift = reader.GetInt32(2) == 1,
                                 Alt = reader.GetInt32(3) == 1,
                             };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+
+        //theme------------
+        public static void SaveTheme(string themeName)
+        {
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+                        DELETE FROM Themes";
+                    command.ExecuteNonQuery();
+                }
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+                        INSERT INTO Themes (ThemeName) VALUES($themeName)";
+                    command.Parameters.AddWithValue("$themeName", themeName);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+        public static string LoadTheme()
+        {
+            using (var connection = new SQLiteConnection($"Data Source={dbFile}"))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+                        SELECT ThemeName FROM Themes LIMIT 1;";
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return reader.GetString(0);
                         }
                     }
                 }

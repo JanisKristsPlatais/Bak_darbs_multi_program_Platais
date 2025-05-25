@@ -47,18 +47,35 @@ namespace Bak_darbs_multi_program_Platais
             ProfileCombobox.SelectionChanged += ProfileCombobox_SelectionChanged;
             if(ProfileCombobox.Items.Count > 0) ProfileCombobox.SelectedIndex = 0;
 
-            ThemeCombobox.SelectedIndex = 0;
-            ThemeManager.CurrentTheme = "Default";
-            ThemeManager.ApplyTheme(this, "Default");
+            var savedTheme = DatabaseManager.LoadTheme();
+            ThemeManager.CurrentTheme = savedTheme;
+            switch (savedTheme) {
+                case "Default":
+                    ThemeCombobox.SelectedIndex = 0;
+                    break;
+                case "Dark":
+                    ThemeCombobox.SelectedIndex = 1;
+                    break;
+                case "Blue":
+                    ThemeCombobox.SelectedIndex = 2;
+                    break;
+                default:
+                    ThemeCombobox.SelectedIndex = 0;
+                    break;
+            }
+            ThemeManager.ApplyTheme(this, savedTheme);
             UpdateHotkeyLabel();
-            
+            this.Loaded += (s, e) => ThemeManager.ApplyTheme(this, savedTheme);
+
         }
 
         //Theme selection----
         private void ThemeCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e){
             if (ThemeCombobox.SelectedItem is ComboBoxItem selectedItem){
-                ThemeManager.CurrentTheme = selectedItem.Tag.ToString();
+                string themeName = selectedItem.Tag.ToString();
+                ThemeManager.CurrentTheme = themeName;
                 ThemeManager.ApplyTheme(this);
+                DatabaseManager.SaveTheme(themeName);
             }
         }
 

@@ -35,7 +35,7 @@
         </StackPanel>
         
         <!-- Theme-->
-        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="2" Margin="0,15,125,0" Orientation="Horizontal">
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="2" Margin="0,10,55,0" Orientation="Horizontal">
             <Label Content="Theme:" Margin="5" />
             <ComboBox x:Name="ThemeCombobox" Width="100" Height="29" SelectionChanged="ThemeCombobox_SelectionChanged" >
                 <ComboBoxItem Content="Default" Tag="Default"/>
