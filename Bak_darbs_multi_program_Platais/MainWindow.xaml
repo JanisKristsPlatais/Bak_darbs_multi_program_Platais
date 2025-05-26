@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Bak_darbs_multi_program_Platais"
         mc:Ignorable="d"
-        Title="MainWindow" Height="800" Width="750" MinWidth="620" MinHeight="500">
+        Title="MultiProgram" Height="800" Width="750" MinWidth="620" MinHeight="500">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
