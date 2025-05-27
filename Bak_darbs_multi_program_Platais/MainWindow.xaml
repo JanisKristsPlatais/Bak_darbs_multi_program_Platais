@@ -9,13 +9,9 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Profile and ComboBox row-->
             <RowDefinition Height="*"/>
-            <!-- WrapPanel with Program buttons-->
             <RowDefinition Height="Auto"/>
-            <!-- Launch All button row-->
             <RowDefinition Height="Auto"/>
-            <!-- Hotkey settings row-->
         </Grid.RowDefinitions>
 
 

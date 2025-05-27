@@ -162,7 +162,7 @@ namespace Bak_darbs_multi_program_Platais.Database
                     command.Parameters.AddWithValue("$profileId", profileId);
                     command.ExecuteNonQuery();
                 }
-                //delte profile
+                //delete profile
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = @"DELETE FROM Profiles WHERE Id = $profileId";
