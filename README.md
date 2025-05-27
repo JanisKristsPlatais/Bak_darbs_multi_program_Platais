@@ -1,12 +1,31 @@
-EN:
-Project is made in Visual Studio 2022 as a WPF project .NET 4.8 Framework
+# Bak_darbs_multi_program_Platais
 
-Download "Release.zip" and open "Bak_darbs_multi_program_Platais.exe": https://github.com/JanisKristsPlatais/Bak_darbs_multi_program_Platais/releases
-Or clone the repo to get full code: git clone https://github.com/JanisKristsPlatais/Bak_darbs_multi_program_Platais.git
+## EN
 
-LV:
+This project is developed in Visual Studio 2022 as a WPF application using .NET Framework 4.8.
 
-Projekts ir veidots programmā Visual Studio 2022 kā WPF projekts .NET 4.8 Framework vidē.
+You can either:
 
-Lejupielādējiet failu "Release.zip" un atveriet failu "Bak_darbs_multi_program_Platais.exe": https://github.com/JanisKristsPlatais/Bak_darbs_multi_program_Platais/releases
-Vai arī klonējiet repozitoriju, lai iegūtu pilno kodu: git clone https://github.com/JanisKristsPlatais/Bak_darbs_multi_program_Platais.git
+- Download [Release.zip](https://github.com/JanisKristsPlatais/Bak_darbs_multi_program_Platais/releases) and run the program `Bak_darbs_multi_program_Platais.exe`,  
+or  
+- Clone the repository to get the full source code:
+
+    git clone https://github.com/JanisKristsPlatais/Bak_darbs_multi_program_Platais.git
+
+Then open the solution in Visual Studio 2022 and edit it as needed.
+
+---
+
+## LV
+
+Šis projekts ir veidots programmā Visual Studio 2022 kā WPF lietotne, izmantojot .NET Framework 4.8.
+
+Jūs varat:
+
+- Lejupielādēt [Release.zip](https://github.com/JanisKristsPlatais/Bak_darbs_multi_program_Platais/releases) un palaist izpildāmo failu `Bak_darbs_multi_program_Platais.exe`,  
+vai  
+- Klonēt repozitoriju, lai iegūtu pilno avota kodu:
+
+    git clone https://github.com/JanisKristsPlatais/Bak_darbs_multi_program_Platais.git
+
+Pēc tam atveriet risinājumu programmā Visual Studio 2022 un to reģidēt pēc vajadzības.
